@@ -23,6 +23,11 @@
     ignores the href and follows data-app-url instead, which opens the same
     endpoint in the app browser and refreshes the content afterwards.
 
+    A rated star is fa-star, an unrated one fa-star-o. Both render everywhere the
+    plugin supports: FontAwesome 4 knows fa-star-o natively, FontAwesome 6 maps
+    it to the regular family through Moodle's v4 shims, and the app resolves the
+    -o suffix to its regular SVG library.
+
     Context variables required for this template:
     * criterion string The criterion being rated
     * contextid int Context the widget is displayed in
@@ -84,13 +89,13 @@
                 <a href="{{url}}" class="filter-rating-star {{#on}}filter-rating-on{{/on}}{{^on}}filter-rating-off{{/on}}"
                     data-value="{{value}}" aria-label="{{label}}" title="{{label}}"
                     data-app-url="{{appurl}}" data-app-open-in="inappbrowser" data-app-url-resume-action="refresh">
-                    <i class="fa fa-star" aria-hidden="true"></i>
+                    <i class="fa {{#on}}fa-star{{/on}}{{^on}}fa-star-o{{/on}}" aria-hidden="true"></i>
                 </a>
             {{/canrate}}
             {{^canrate}}
                 <span class="filter-rating-star {{#on}}filter-rating-on{{/on}}{{^on}}filter-rating-off{{/on}}"
                     data-value="{{value}}">
-                    <i class="fa fa-star" aria-hidden="true"></i>
+                    <i class="fa {{#on}}fa-star{{/on}}{{^on}}fa-star-o{{/on}}" aria-hidden="true"></i>
                 </span>
             {{/canrate}}
         {{/stars}}

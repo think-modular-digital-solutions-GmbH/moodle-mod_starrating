@@ -34,7 +34,7 @@
     <span class="filter-rating-stars" aria-hidden="true">
         {{#stars}}
             <span class="filter-rating-star {{#on}}filter-rating-on{{/on}}{{^on}}filter-rating-off{{/on}}">
-                <i class="fa fa-star"></i>
+                <i class="fa {{#on}}fa-star{{/on}}{{^on}}fa-star-o{{/on}}"></i>
             </span>
         {{/stars}}
     </span>

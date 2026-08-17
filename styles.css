@@ -16,13 +16,15 @@
 .filter-rating .filter-rating-star {
     display: inline-block;
     padding: 0.1rem;
+    font-size: 1.15em;
     line-height: 1;
     text-decoration: none;
 }
 
 /*
- * The two states also differ in brightness, and the rating is repeated as text
- * next to the stars, so the value is never carried by colour alone.
+ * A rated star is filled and gold, an unrated one is an outline in a muted
+ * grey. The shape carries the difference, the colour only reinforces it, and
+ * the rating is repeated as text, so nothing depends on colour alone.
  * Both colours reach at least 3:1 against a white background.
  */
 .filter-rating .filter-rating-off {
@@ -30,12 +32,12 @@
 }
 
 .filter-rating .filter-rating-on {
-    color: #a35c00;
+    color: #b8860b;
 }
 
 .filter-rating a.filter-rating-star:hover,
 .filter-rating a.filter-rating-star:focus {
-    color: #7a4400;
+    color: #8a6508;
 }
 
 .filter-rating a.filter-rating-star:focus-visible,

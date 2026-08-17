@@ -73,7 +73,7 @@ class rating_widget implements renderable, templatable {
                 'value' => $value,
                 'on' => $value <= $userrating,
                 'url' => $canrate ? $this->build_rate_url($value)->out(false) : null,
-                'appurl' => $canrate ? $this->build_rate_url($value, true)->out_as_local_url(false) : null,
+                'appurl' => $canrate ? $this->build_rate_url($value, true)->out(false) : null,
                 'label' => get_string('ratestars', 'filter_rating', (object) [
                     'stars' => $value,
                     'max' => rating_manager::MAX_STARS,
@@ -97,7 +97,7 @@ class rating_widget implements renderable, templatable {
             'averagetext' => $this->get_average_text($stats),
             'canclear' => $canrate && $allowclear && $userrating > 0,
             'clearurl' => $canrate ? $this->build_rate_url(0)->out(false) : null,
-            'clearappurl' => $canrate ? $this->build_rate_url(0, true)->out_as_local_url(false) : null,
+            'clearappurl' => $canrate ? $this->build_rate_url(0, true)->out(false) : null,
             'clearlabel' => get_string('clearrating', 'filter_rating'),
             'clearaltlabel' => get_string('clearratingaria', 'filter_rating', $this->criterion),
         ];
@@ -108,7 +108,10 @@ class rating_widget implements renderable, templatable {
      *
      * The app opens its own, auto logged in browser session, in which the return
      * URL of the web page would be meaningless. It gets a variant of the link
-     * that reports back and lets the user close the window instead.
+     * that reports back and lets the user close the window instead. That variant
+     * must be absolute: the app resolves a root relative URL against the domain
+     * only and would drop the subdirectory of a Moodle that is not installed at
+     * the domain root.
      *
      * @param int $rating Number of stars, 0 to withdraw the rating.
      * @param bool $forapp Whether to build the variant used by the Moodle app.

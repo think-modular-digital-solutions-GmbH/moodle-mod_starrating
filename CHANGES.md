@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Tapping a star in the Moodle app opened a page that did not exist on sites
+  where Moodle is installed in a subdirectory. The link the app follows is now
+  absolute.
+- All five stars looked filled whether or not the criterion had been rated.
+  Rated stars are now filled and gold, unrated ones are outlines, in the
+  browser and in the app alike.
+
 ### Added
 
 - Star rating filter: the token `{{ rating:criterion }}` is replaced by a five

@@ -83,8 +83,8 @@ and is not granted to teachers by default.
 ## Moodle app
 
 The filter runs on the server, so the app receives the finished star markup
-inside any formatted text. Each star therefore carries a `data-app-url` in
-addition to its `href`:
+inside any formatted text. Each star therefore carries an absolute
+`data-app-url` in addition to its `href`:
 
 - In a browser the `href` is followed: the rating is stored and the user is
   redirected back to the page they rated on.
@@ -99,6 +99,11 @@ delegate for text filters (`CoreFilterDelegate` is not in the list of delegates
 site plugins may register, as of app 5.2), so a filter cannot ship JavaScript
 that saves the rating inline. Should that change, the web services below are
 already in place to do it without any server side change.
+
+The app converts the star icons into its own SVG icons and does not load this
+plugin's stylesheet, so in the app the stars appear in the surrounding text
+colour rather than gold. Filled and outlined stars are different icons, not
+different colours, so the rating still reads correctly there.
 
 ## Web services
 
@@ -149,9 +154,9 @@ The widget was built against WCAG 2.2 AA:
   a visible focus outline.
 - The five stars form a labelled group, and each link has an accessible name
   stating what it will do ("Rate teaching quality with 3 of 5 stars").
-- The current rating is repeated as visually hidden text in a polite live
-  region, so it is never conveyed by colour alone. The star colours reach at
-  least 3:1 against a white background.
+- A rated star is a filled icon, an unrated one an outline, so the rating is
+  carried by shape and not by colour. It is repeated as visually hidden text as
+  well. The star colours reach at least 3:1 against a white background.
 - The star icons themselves are `aria-hidden`, the report tables use header
   cells and a caption.
 
