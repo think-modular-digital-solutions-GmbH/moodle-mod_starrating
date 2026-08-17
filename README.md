@@ -9,8 +9,9 @@ a token into the text:
 
 The token is replaced by five FontAwesome stars. Every star is a link to an
 endpoint that stores the rating and sends the user back to the page they came
-from. The links also work in the Moodle app. A site wide report shows all
-ratings and the averages per course and per criterion.
+from. In the Moodle app the same stars are tappable and save without leaving
+the app. A site wide report shows all ratings and the averages per course and
+per criterion.
 
 ## Requirements
 
@@ -82,28 +83,29 @@ and is not granted to teachers by default.
 
 ## Moodle app
 
+Ratings are given **inside the app**. No browser opens, and nobody logs in a
+second time.
+
 The filter runs on the server, so the app receives the finished star markup
-inside any formatted text. Each star therefore carries an absolute
-`data-app-url` in addition to its `href`:
+inside any formatted text. What the app is missing is a way to write the rating
+back, because it offers no site plugin delegate for text filters
+(`CoreFilterDelegate` is not in the list of delegates site plugins may register,
+as of app 5.2). `db/mobile.php` closes that gap with an `init` handler, which
+the app runs once when it loads the site plugins, independently of any delegate:
 
-- In a browser the `href` is followed: the rating is stored and the user is
-  redirected back to the page they rated on.
-- In the app the `href` is ignored and `data-app-url` is opened in the app
-  browser with auto login. That variant of the endpoint reports the result and
-  asks the user to close the window. Because the star also carries
-  `data-app-url-resume-action="refresh"`, the app refreshes the content when
-  the window closes, so the new rating appears.
+- `mobile/init.js` listens for taps on the stars anywhere in the app and saves
+  the rating through `filter_rating_set_rating`, then repaints the stars in
+  place. The tap is caught in the capture phase, so the app never gets as far as
+  opening the star's `href`.
+- The same handler points the app at this plugin's `styles.css`, which the app
+  downloads and applies, so the stars look the same in both places.
+- The `href` on each star stays untouched and is what the browser uses. If the
+  app ever fails to load the plugin's JavaScript, the link still works, it just
+  falls back to opening in a browser.
 
-The app cannot do better than this today: the Moodle app has no site plugin
-delegate for text filters (`CoreFilterDelegate` is not in the list of delegates
-site plugins may register, as of app 5.2), so a filter cannot ship JavaScript
-that saves the rating inline. Should that change, the web services below are
-already in place to do it without any server side change.
-
-The app converts the star icons into its own SVG icons and does not load this
-plugin's stylesheet, so in the app the stars appear in the surrounding text
-colour rather than gold. Filled and outlined stars are different icons, not
-different colours, so the rating still reads correctly there.
+The app renders the star icons as its own SVG icons, which is why a rated star
+is a different icon (`fa-star`) rather than a different colour from an unrated
+one (`fa-star-o`).
 
 ## Web services
 
@@ -117,18 +119,20 @@ AJAX, so a custom app or a custom front end can use them directly.
 
 ## Security
 
-The star links are `GET` links that write data, and they must work in two
-different sessions: the browser session, and the separate session the app
-creates when it opens the link with auto login. A session key cannot cover
-both, so each link is signed with an HMAC that is bound to the user, the
-context, the criterion and that one number of stars
+The star links are `GET` links that write data, so they need a credential, and
+that credential is rendered into filtered text where output caching can get at
+it. Rather than putting a session key there, each link is signed with an HMAC
+bound to the user, the context, the criterion and that one number of stars
 (`\filter_rating\local\rating_token`).
 
-That is deliberately narrower than a session key: a leaked link allows nothing
-but setting that one rating of that one user, and no session key ever ends up
-inside filtered text, where it could be picked up by output caching. If the
-signature is missing or stale the endpoint does not fail, it asks for
-confirmation, and that confirmation is a `POST` protected by the session key.
+That is deliberately the narrower credential: a leaked link allows nothing but
+setting that one rating of that one user, whereas a leaked session key would
+open the door to any request in that session. If the signature is missing or
+stale the endpoint does not fail, it asks for confirmation, and that
+confirmation is a `POST` protected by the session key.
+
+In the app no link is followed at all — the rating goes through the web
+service, which Moodle authenticates with the app's own token.
 
 Return URLs are cleaned with `PARAM_LOCALURL`, so the endpoint cannot be used
 as an open redirect.

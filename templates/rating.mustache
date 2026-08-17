@@ -19,9 +19,9 @@
 
     Interactive five star rating.
 
-    Each star is a real link, so rating works without JavaScript. The Moodle app
-    ignores the href and follows data-app-url instead, which opens the same
-    endpoint in the app browser and refreshes the content afterwards.
+    Each star is a real link, so rating works without JavaScript. In the Moodle
+    app the same markup is used, but mobile/init.js catches the tap and saves the
+    rating through a web service, so the app is never left.
 
     A rated star is fa-star, an unrated one fa-star-o. Both render everywhere the
     plugin supports: FontAwesome 4 knows fa-star-o natively, FontAwesome 6 maps
@@ -36,14 +36,14 @@
     * count int Number of ratings
     * average float Average rating
     * canrate bool Whether the current user may rate
-    * stars array List of value, on, url, appurl and label
+    * stars array List of value, on, url and label
     * grouplabel string Accessible name of the whole widget
     * statustext string The current user rating in words
     * showaverage bool Whether to show the average
     * averagetext string The average in words
-    * canclear bool Whether the withdraw link is shown
+    * showclear bool Whether the withdraw link is rendered at all
+    * canclear bool Whether the withdraw link is currently visible
     * clearurl string Link that withdraws the rating
-    * clearappurl string The same link for the Moodle app
     * clearlabel string Visible text of the withdraw link
     * clearaltlabel string Accessible name of the withdraw link
 
@@ -57,19 +57,19 @@
         "average": 3.8,
         "canrate": true,
         "stars": [
-            {"value": 1, "on": true, "url": "#", "appurl": "#", "label": "Rate teaching quality with 1 of 5 stars"},
-            {"value": 2, "on": true, "url": "#", "appurl": "#", "label": "Rate teaching quality with 2 of 5 stars"},
-            {"value": 3, "on": true, "url": "#", "appurl": "#", "label": "Rate teaching quality with 3 of 5 stars"},
-            {"value": 4, "on": false, "url": "#", "appurl": "#", "label": "Rate teaching quality with 4 of 5 stars"},
-            {"value": 5, "on": false, "url": "#", "appurl": "#", "label": "Rate teaching quality with 5 of 5 stars"}
+            {"value": 1, "on": true, "url": "#", "label": "Rate teaching quality with 1 of 5 stars"},
+            {"value": 2, "on": true, "url": "#", "label": "Rate teaching quality with 2 of 5 stars"},
+            {"value": 3, "on": true, "url": "#", "label": "Rate teaching quality with 3 of 5 stars"},
+            {"value": 4, "on": false, "url": "#", "label": "Rate teaching quality with 4 of 5 stars"},
+            {"value": 5, "on": false, "url": "#", "label": "Rate teaching quality with 5 of 5 stars"}
         ],
         "grouplabel": "Star rating for teaching quality",
         "statustext": "Your rating for teaching quality: 3 of 5 stars",
         "showaverage": true,
         "averagetext": "Average 3.8 of 5 from 12 ratings",
+        "showclear": true,
         "canclear": true,
         "clearurl": "#",
-        "clearappurl": "#",
         "clearlabel": "Withdraw",
         "clearaltlabel": "Withdraw your rating for teaching quality"
     }
@@ -87,8 +87,7 @@
         {{#stars}}
             {{#canrate}}
                 <a href="{{url}}" class="filter-rating-star {{#on}}filter-rating-on{{/on}}{{^on}}filter-rating-off{{/on}}"
-                    data-value="{{value}}" aria-label="{{label}}" title="{{label}}"
-                    data-app-url="{{appurl}}" data-app-open-in="inappbrowser" data-app-url-resume-action="refresh">
+                    data-value="{{value}}" aria-label="{{label}}" title="{{label}}">
                     <i class="fa {{#on}}fa-star{{/on}}{{^on}}fa-star-o{{/on}}" aria-hidden="true"></i>
                 </a>
             {{/canrate}}
@@ -103,8 +102,8 @@
     {{#showaverage}}
         <span class="filter-rating-average" data-region="average">{{averagetext}}</span>
     {{/showaverage}}
-    {{#canclear}}
-        <a href="{{clearurl}}" class="filter-rating-clear" data-region="clear" aria-label="{{clearaltlabel}}"
-            data-app-url="{{clearappurl}}" data-app-open-in="inappbrowser" data-app-url-resume-action="refresh">{{clearlabel}}</a>
-    {{/canclear}}
+    {{#showclear}}
+        <a href="{{clearurl}}" class="filter-rating-clear {{^canclear}}filter-rating-hidden{{/canclear}}"
+            data-region="clear" aria-label="{{clearaltlabel}}">{{clearlabel}}</a>
+    {{/showclear}}
 </span>

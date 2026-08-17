@@ -28,7 +28,6 @@ $string['allcourses'] = 'Alle Kurse';
 $string['allcriteria'] = 'Alle Kriterien';
 $string['allowclear'] = 'Zurückziehen einer Bewertung erlauben';
 $string['allowclear_desc'] = 'Zeigt neben den Sternen einen Link an, mit dem die eigene Bewertung wieder entfernt werden kann.';
-$string['appclosewindow'] = 'Sie können dieses Fenster jetzt schließen. Ihre Bewertung erscheint, sobald die Seite neu geladen wird.';
 $string['applyfilter'] = 'Filter anwenden';
 $string['averages'] = 'Durchschnittswerte';
 $string['averagescaption'] = 'Durchschnittliche Bewertung je gewählter Gruppierung';

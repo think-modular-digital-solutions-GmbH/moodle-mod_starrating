@@ -68,8 +68,6 @@ final class token_processor_test extends \advanced_testcase {
      * @return void
      */
     public function test_token_is_replaced(): void {
-        global $CFG;
-
         $course = $this->setup_course();
         $context = context_course::instance($course->id);
 
@@ -80,10 +78,6 @@ final class token_processor_test extends \advanced_testcase {
         $this->assertStringContainsString('fa-star', $result);
         $this->assertStringContainsString('data-criterion="teaching quality"', $result);
         $this->assertStringContainsString('/filter/rating/rate.php', $result);
-
-        // The app resolves a root relative URL against the domain only, so the
-        // link it follows has to carry the full wwwroot.
-        $this->assertStringContainsString('data-app-url="' . $CFG->wwwroot . '/filter/rating/rate.php', $result);
     }
 
     /**

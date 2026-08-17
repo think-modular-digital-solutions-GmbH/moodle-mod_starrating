@@ -63,10 +63,14 @@ class get_rating extends external_api {
         $courseid = rating_manager::get_courseid_from_context($context);
         $stats = rating_manager::get_stats($courseid, $criterion);
 
+        $userrating = rating_manager::get_user_rating($courseid, $criterion);
+
         return [
-            'userrating' => rating_manager::get_user_rating($courseid, $criterion),
+            'userrating' => $userrating,
             'average' => $stats->average,
             'count' => $stats->count,
+            'statustext' => rating_manager::get_status_text($criterion, $userrating),
+            'averagetext' => rating_manager::get_average_text($stats),
             'canrate' => rating_manager::can_rate($context),
         ];
     }
@@ -81,6 +85,8 @@ class get_rating extends external_api {
             'userrating' => new external_value(PARAM_INT, 'Stars the current user gave, 0 when not rated'),
             'average' => new external_value(PARAM_FLOAT, 'Average of all ratings for the criterion'),
             'count' => new external_value(PARAM_INT, 'Number of ratings the average is based on'),
+            'statustext' => new external_value(PARAM_TEXT, 'The rating of the user in words'),
+            'averagetext' => new external_value(PARAM_TEXT, 'The average in words'),
             'canrate' => new external_value(PARAM_BOOL, 'Whether the current user may rate'),
         ]);
     }

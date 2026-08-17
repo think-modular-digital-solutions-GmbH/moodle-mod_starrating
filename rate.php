@@ -17,10 +17,9 @@
 /**
  * Stores a star rating and returns to the page the rating was given on.
  *
- * The same endpoint serves the browser and the Moodle app. The app opens it in
- * its own auto logged in browser session, in which the page the user came from
- * cannot be returned to, so with appreturn=1 the page reports the result and
- * lets the user close the window instead.
+ * This is the browser path. The Moodle app never reaches it: there the tap on a
+ * star is caught by mobile/init.js and saved through the filter_rating_set_rating
+ * web service, without leaving the app.
  *
  * @package    filter_rating
  * @copyright  2026 Think Modular
@@ -37,7 +36,6 @@ $contextid = required_param('contextid', PARAM_INT);
 $criterion = required_param('criterion', PARAM_TEXT);
 $rating = required_param('rating', PARAM_INT);
 $token = optional_param('token', '', PARAM_ALPHANUM);
-$appreturn = optional_param('appreturn', 0, PARAM_BOOL);
 $returnparam = optional_param('returnurl', '', PARAM_LOCALURL);
 
 [$context, $course, $cm] = get_context_info_array($contextid);
@@ -59,15 +57,13 @@ if ($rating < 0 || $rating > rating_manager::MAX_STARS) {
 }
 
 $urlparams = ['contextid' => $contextid, 'criterion' => $criterion, 'rating' => $rating];
-if ($appreturn) {
-    $urlparams['appreturn'] = 1;
-} else if ($returnparam !== '') {
+if ($returnparam !== '') {
     $urlparams['returnurl'] = $returnparam;
 }
 
 $PAGE->set_context($context);
 $PAGE->set_url(new moodle_url('/filter/rating/rate.php', $urlparams));
-$PAGE->set_pagelayout($appreturn ? 'embedded' : 'standard');
+$PAGE->set_pagelayout('standard');
 $PAGE->set_title(get_string('pluginname', 'filter_rating'));
 $PAGE->set_heading($course ? format_string($course->fullname) : format_string($SITE->fullname));
 
@@ -113,15 +109,5 @@ rating_manager::set_rating($context, rating_manager::get_courseid_from_context($
 $message = $rating > 0
     ? get_string('ratingsaved', 'filter_rating')
     : get_string('ratingcleared', 'filter_rating');
-
-if ($appreturn) {
-    // Inside the app browser there is nowhere to return to. Closing the window
-    // makes the app refresh the content the stars were rendered in.
-    echo $OUTPUT->header();
-    echo $OUTPUT->notification($message, notification::NOTIFY_SUCCESS);
-    echo html_writer::tag('p', get_string('appclosewindow', 'filter_rating'));
-    echo $OUTPUT->footer();
-    exit;
-}
 
 redirect($returnurl, $message, null, notification::NOTIFY_SUCCESS);

@@ -28,7 +28,6 @@ $string['allcourses'] = 'All courses';
 $string['allcriteria'] = 'All criteria';
 $string['allowclear'] = 'Allow withdrawing a rating';
 $string['allowclear_desc'] = 'Show a link next to the stars that lets people remove the rating they gave.';
-$string['appclosewindow'] = 'You can close this window now. Your rating will show as soon as the page reloads.';
 $string['applyfilter'] = 'Apply filter';
 $string['averages'] = 'Averages';
 $string['averagescaption'] = 'Average rating per selected grouping';

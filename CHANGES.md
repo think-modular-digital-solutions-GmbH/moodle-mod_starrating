@@ -9,9 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Tapping a star in the Moodle app opened a page that did not exist on sites
-  where Moodle is installed in a subdirectory. The link the app follows is now
-  absolute.
+- Rating in the Moodle app opened the in-app browser and asked for another
+  login. Taps on the stars are now handled inside the app and saved through the
+  web service, and the stars update on the spot.
 - All five stars looked filled whether or not the criterion had been rated.
   Rated stars are now filled and gold, unrated ones are outlines, in the
   browser and in the app alike.
@@ -21,8 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Star rating filter: the token `{{ rating:criterion }}` is replaced by a five
   star FontAwesome rating anywhere text is filtered in Moodle.
 - Rating endpoint that stores the rating and returns to the page it was given
-  on, and that also serves the Moodle app through `data-app-url`, refreshing
-  the content when the app window closes.
+  on, plus a Moodle app integration that saves the same rating inside the app.
 - Web services `filter_rating_set_rating` and `filter_rating_get_rating`, both
   part of the official mobile service and available over AJAX.
 - Site report under *Site administration → Reports → Star ratings*: averages

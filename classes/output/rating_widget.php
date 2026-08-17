@@ -28,9 +28,8 @@ use templatable;
  * The five stars rendered in place of a rating token.
  *
  * Each star is a plain link to rate.php, which works without JavaScript in the
- * browser. For the Moodle app every star carries a data-app-url as well, which
- * the app opens with auto login and, once closed, refreshes the content it came
- * from so that the new rating shows.
+ * browser. In the Moodle app the same markup is used, but the tap is caught by
+ * mobile/init.js and saved through a web service, so the app is never left.
  *
  * @package    filter_rating
  * @copyright  2026 Think Modular
@@ -73,7 +72,6 @@ class rating_widget implements renderable, templatable {
                 'value' => $value,
                 'on' => $value <= $userrating,
                 'url' => $canrate ? $this->build_rate_url($value)->out(false) : null,
-                'appurl' => $canrate ? $this->build_rate_url($value, true)->out(false) : null,
                 'label' => get_string('ratestars', 'filter_rating', (object) [
                     'stars' => $value,
                     'max' => rating_manager::MAX_STARS,
@@ -92,12 +90,14 @@ class rating_widget implements renderable, templatable {
             'canrate' => $canrate,
             'stars' => $stars,
             'grouplabel' => get_string('ratinggroup', 'filter_rating', $this->criterion),
-            'statustext' => $this->get_status_text($userrating),
+            'statustext' => rating_manager::get_status_text($this->criterion, $userrating),
             'showaverage' => $showaverage,
-            'averagetext' => $this->get_average_text($stats),
+            'averagetext' => rating_manager::get_average_text($stats),
+            // The link is always rendered when withdrawing is allowed, only hidden
+            // while there is nothing to withdraw, so that the app can reveal it.
+            'showclear' => $canrate && $allowclear,
             'canclear' => $canrate && $allowclear && $userrating > 0,
             'clearurl' => $canrate ? $this->build_rate_url(0)->out(false) : null,
-            'clearappurl' => $canrate ? $this->build_rate_url(0, true)->out(false) : null,
             'clearlabel' => get_string('clearrating', 'filter_rating'),
             'clearaltlabel' => get_string('clearratingaria', 'filter_rating', $this->criterion),
         ];
@@ -106,18 +106,10 @@ class rating_widget implements renderable, templatable {
     /**
      * Link to the endpoint that stores a rating.
      *
-     * The app opens its own, auto logged in browser session, in which the return
-     * URL of the web page would be meaningless. It gets a variant of the link
-     * that reports back and lets the user close the window instead. That variant
-     * must be absolute: the app resolves a root relative URL against the domain
-     * only and would drop the subdirectory of a Moodle that is not installed at
-     * the domain root.
-     *
      * @param int $rating Number of stars, 0 to withdraw the rating.
-     * @param bool $forapp Whether to build the variant used by the Moodle app.
      * @return moodle_url
      */
-    protected function build_rate_url(int $rating, bool $forapp = false): moodle_url {
+    protected function build_rate_url(int $rating): moodle_url {
         global $USER;
 
         // The course is derived from the context by the endpoint, it is not a parameter.
@@ -128,48 +120,10 @@ class rating_widget implements renderable, templatable {
             'token' => rating_token::generate((int) $USER->id, (int) $this->context->id, $this->criterion, $rating),
         ];
 
-        if ($forapp) {
-            $params['appreturn'] = 1;
-        } else if ($this->returnurl) {
+        if ($this->returnurl) {
             $params['returnurl'] = $this->returnurl->out_as_local_url(false);
         }
 
         return new moodle_url('/filter/rating/rate.php', $params);
-    }
-
-    /**
-     * The rating of the current user in words, so that it is not conveyed by colour alone.
-     *
-     * @param int $userrating Number of stars the current user gave.
-     * @return string
-     */
-    protected function get_status_text(int $userrating): string {
-        if ($userrating > 0) {
-            return get_string('yourrating', 'filter_rating', (object) [
-                'stars' => $userrating,
-                'max' => rating_manager::MAX_STARS,
-                'criterion' => $this->criterion,
-            ]);
-        }
-
-        return get_string('notratedyet', 'filter_rating', $this->criterion);
-    }
-
-    /**
-     * The average of all ratings in words.
-     *
-     * @param \stdClass $stats Object with the count and average properties.
-     * @return string
-     */
-    protected function get_average_text(\stdClass $stats): string {
-        if ($stats->count === 0) {
-            return get_string('noratingsyet', 'filter_rating');
-        }
-
-        return get_string('averagetext', 'filter_rating', (object) [
-            'average' => format_float($stats->average, 1),
-            'max' => rating_manager::MAX_STARS,
-            'count' => $stats->count,
-        ]);
     }
 }

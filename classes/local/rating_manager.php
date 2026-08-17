@@ -199,6 +199,43 @@ class rating_manager {
     }
 
     /**
+     * The rating of a user in words, so that it is never carried by the stars alone.
+     *
+     * @param string $criterion Normalised criterion.
+     * @param int $userrating Number of stars the user gave.
+     * @return string
+     */
+    public static function get_status_text(string $criterion, int $userrating): string {
+        if ($userrating > 0) {
+            return get_string('yourrating', 'filter_rating', (object) [
+                'stars' => $userrating,
+                'max' => self::MAX_STARS,
+                'criterion' => $criterion,
+            ]);
+        }
+
+        return get_string('notratedyet', 'filter_rating', $criterion);
+    }
+
+    /**
+     * The average of all ratings in words.
+     *
+     * @param stdClass $stats Statistics as returned by get_stats().
+     * @return string
+     */
+    public static function get_average_text(stdClass $stats): string {
+        if ($stats->count === 0) {
+            return get_string('noratingsyet', 'filter_rating');
+        }
+
+        return get_string('averagetext', 'filter_rating', (object) [
+            'average' => format_float($stats->average, 1),
+            'max' => self::MAX_STARS,
+            'count' => $stats->count,
+        ]);
+    }
+
+    /**
      * Drop the request level caches after a write.
      *
      * @return void

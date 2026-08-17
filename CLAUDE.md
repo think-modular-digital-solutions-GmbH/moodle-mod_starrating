@@ -33,17 +33,20 @@ Target: Moodle 4.3 and later, developed against Moodle 4.5 LTS.
   is what makes the report's course and criterion averages meaningful. The
   context is stored for the Privacy API and for reference only.
 - **Rating links are signed with an HMAC, not with a session key**
-  (`classes/local/rating_token.php`). The link has to work in the browser
-  session *and* in the separate session the app creates with auto login, which
-  no session key can cover. The token is also the narrower credential and keeps
-  session keys out of filtered text. A missing or stale token falls back to a
-  confirmation, which is a `POST` protected by the session key.
-- **The Moodle app has no site plugin delegate for text filters.**
-  `CoreFilterDelegate` is not in the delegate list in the app's
-  `siteplugins-init.ts` (checked against app 5.2), so a filter cannot ship
-  app-side JavaScript. The stars therefore use `data-app-url`,
-  `data-app-open-in="inappbrowser"` and `data-app-url-resume-action="refresh"`.
-  Do not reintroduce `db/mobile.php` unless the app gains that delegate.
+  (`classes/local/rating_token.php`). The credential is rendered into filtered
+  text, where output caching can reach it, and a scoped HMAC leaks far less
+  than a session key. A missing or stale token falls back to a confirmation,
+  which is a `POST` protected by the session key.
+- **The app path goes through `db/mobile.php`, and it never opens a browser.**
+  `CoreFilterDelegate` is not a site plugin delegate (checked against app 5.2),
+  but a handler in `db/mobile.php` may declare `init` and `styles` with no
+  delegate at all: `registerHandler()` runs both before the delegate switch,
+  and an unknown or absent delegate simply falls through to `default:`. So
+  `mobile/init.js` runs at app start and intercepts the taps in the capture
+  phase, and the app downloads the plugin's `styles.css`.
+  **Never send the user to the in-app browser** (`data-app-url`,
+  `data-app-open-in="inappbrowser"`): it costs them a second login and was
+  rejected outright.
 - **Both `classes/text_filter.php` and `filter.php` are shipped.** Moodle 4.5+
   uses the first, older releases the second, and core only falls back to
   `filter.php` when the new class is absent, so neither triggers a deprecation
@@ -55,13 +58,16 @@ Target: Moodle 4.3 and later, developed against Moodle 4.5 LTS.
   `-o` suffix to its `regular` SVG library (`CoreIcons.fixFontAwesomeIconName`).
   Do not "fix" this back to two solid stars in different colours — that was the
   first attempt and it looked like five filled stars.
-- **`data-app-url` must be absolute** (`$url->out(false)`), never
+- **Any URL handed to the app must be absolute** (`$url->out(false)`), never
   `out_as_local_url()`. The app's `CoreUrl.toAbsoluteURL()` drops the parent
   path for URLs starting with `/`, which 404s on any Moodle installed in a
-  subdirectory. The `href` next to it stays as it is.
-- **The app does not load the plugin's `styles.css`.** Anything that must be
-  visible in the app has to come from the markup itself, which is why the
-  filled/unfilled distinction is a different icon and not a colour.
+  subdirectory.
+- **Services in the app's plugin JavaScript come from `this`**, under their
+  provider class names: `this.CoreSitesProvider`, `this.CoreToastsService`,
+  `this.CoreAlertsService`. Bare globals do not resolve, and a top level
+  `return` is a syntax error because the code is passed to `eval`.
+- **Display strings for the app come from the web service** (`statustext`,
+  `averagetext`, `message`), so nothing has to be translated in JavaScript.
 
 ## Verification
 

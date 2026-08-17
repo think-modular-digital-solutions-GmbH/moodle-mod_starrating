@@ -58,6 +58,15 @@
     font-size: 0.85em;
 }
 
+/*
+ * The withdraw link is rendered whenever withdrawing is allowed and only hidden
+ * while there is nothing to withdraw, so that the Moodle app can reveal it after
+ * a rating without reloading the content.
+ */
+.filter-rating .filter-rating-hidden {
+    display: none;
+}
+
 /* Averages in the report sit inside table cells. */
 .filter-rating-static {
     gap: 0.3rem;
