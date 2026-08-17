@@ -1,0 +1,62 @@
+/* Star rating filter. */
+
+.filter-rating {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.15rem;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.filter-rating .filter-rating-stars {
+    display: inline-flex;
+    gap: 0.1rem;
+}
+
+.filter-rating .filter-rating-star {
+    display: inline-block;
+    padding: 0.1rem;
+    line-height: 1;
+    text-decoration: none;
+}
+
+/*
+ * The two states also differ in brightness, and the rating is repeated as text
+ * next to the stars, so the value is never carried by colour alone.
+ * Both colours reach at least 3:1 against a white background.
+ */
+.filter-rating .filter-rating-off {
+    color: #6c757d;
+}
+
+.filter-rating .filter-rating-on {
+    color: #a35c00;
+}
+
+.filter-rating a.filter-rating-star:hover,
+.filter-rating a.filter-rating-star:focus {
+    color: #7a4400;
+}
+
+.filter-rating a.filter-rating-star:focus-visible,
+.filter-rating a.filter-rating-clear:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+}
+
+.filter-rating .filter-rating-average {
+    margin-left: 0.4rem;
+    font-size: 0.85em;
+    color: #495057;
+    white-space: normal;
+}
+
+.filter-rating .filter-rating-clear {
+    margin-left: 0.4rem;
+    font-size: 0.85em;
+}
+
+/* Averages in the report sit inside table cells. */
+.filter-rating-static {
+    gap: 0.3rem;
+}

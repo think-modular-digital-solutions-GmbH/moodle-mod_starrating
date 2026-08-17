@@ -1,93 +1,178 @@
-# rating
+# filter_rating — Star rating filter for Moodle
 
+Drops a five star rating widget anywhere text is displayed in Moodle by writing
+a token into the text:
 
-
-## Getting started
-
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
-
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
-
-## Add your files
-
-* [Create](https://docs.gitlab.com/user/project/repository/web_editor/#create-a-file) or [upload](https://docs.gitlab.com/user/project/repository/web_editor/#upload-a-file) files
-* [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
-
-```
-cd existing_repo
-git remote add origin https://git.think-modular.com/development/moodle/rating.git
-git branch -M main
-git push -uf origin main
+```text
+{{ rating:teaching quality }}
 ```
 
-## Integrate with your tools
+The token is replaced by five FontAwesome stars. Every star is a link to an
+endpoint that stores the rating and sends the user back to the page they came
+from. The links also work in the Moodle app. A site wide report shows all
+ratings and the averages per course and per criterion.
 
-* [Set up project integrations](https://git.think-modular.com/development/moodle/rating/-/settings/integrations)
+## Requirements
 
-## Collaborate with your team
-
-* [Invite team members and collaborators](https://docs.gitlab.com/user/project/members/)
-* [Create a new merge request](https://docs.gitlab.com/user/project/merge_requests/creating_merge_requests/)
-* [Automatically close issues from merge requests](https://docs.gitlab.com/user/project/issues/managing_issues/#closing-issues-automatically)
-* [Enable merge request approvals](https://docs.gitlab.com/user/project/merge_requests/approvals/)
-* [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
-
-## Test and Deploy
-
-Use the built-in continuous integration in GitLab.
-
-* [Get started with GitLab CI/CD](https://docs.gitlab.com/ci/quick_start/)
-* [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/user/application_security/sast/)
-* [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/topics/autodevops/requirements/)
-* [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/user/clusters/agent/)
-* [Set up protected environments](https://docs.gitlab.com/ci/environments/protected_environments/)
-
-***
-
-# Editing this README
-
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
-
-## Suggestions for a good README
-
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+- Moodle 4.3 or later. Developed and reviewed against Moodle 4.5 LTS.
+  The filter ships both the current `classes/text_filter.php` (Moodle 4.5 and
+  later) and the legacy `filter.php`, so it runs on either API without a
+  deprecation notice.
+- Moodle app 4.x or later for the mobile behaviour described below.
+- FontAwesome, which every Moodle theme based on Boost provides.
 
 ## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+
+1. Copy this repository to `filter/rating` in your Moodle installation.
+2. Visit *Site administration → Notifications* to install the database table.
+3. Enable the filter under *Site administration → Plugins → Filters →
+   Manage filters*, set it to **On**, and make sure it is applied to
+   *Content* (and to *Content and headings* if you want tokens in headings).
 
 ## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+Write the token into any text Moodle passes through the filters: a course or
+section summary, a label, a page, an activity description, a forum post, a
+block, and so on.
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+```text
+{{ rating:teaching quality }}
+{{rating:materials}}
+{{ Rating : pace of the course }}
+```
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+- The keyword is case insensitive, spaces around it are optional.
+- The criterion may contain spaces and is capped at 100 characters. It is
+  trimmed, stripped of markup and collapsed to single spaces before use.
+- A token without a usable criterion is left in the text untouched.
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+### What a rating belongs to
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+A rating is stored once per **course, criterion and user**. The same criterion
+used in several places of one course is therefore one rating, which is what
+makes the course and criterion averages in the report meaningful. Tokens
+outside any course (front page, site level pages) count towards the site
+course.
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+Users need the `filter/rating:rate` capability, which students, teachers and
+managers have by default. Guests and users without the capability see the
+stars as a read only display.
+
+## Settings
+
+*Site administration → Plugins → Filters → Star rating*
+
+| Setting | Default | Effect |
+| :--- | :--- | :--- |
+| Show the average | on | Shows the average and the number of ratings next to the stars |
+| Allow withdrawing a rating | on | Shows a link that removes the rating the user gave |
+
+## The report
+
+*Site administration → Reports → Star ratings*, capability
+`filter/rating:viewreports` (managers by default).
+
+- Filter by course, by criterion, or both.
+- Group the averages by course and criterion, by course, or by criterion.
+- Below the averages, every individual rating is listed with the user who gave
+  it, sortable, paged and downloadable in the usual Moodle formats.
+
+Because the individual list names users, the capability carries `RISK_PERSONAL`
+and is not granted to teachers by default.
+
+## Moodle app
+
+The filter runs on the server, so the app receives the finished star markup
+inside any formatted text. Each star therefore carries a `data-app-url` in
+addition to its `href`:
+
+- In a browser the `href` is followed: the rating is stored and the user is
+  redirected back to the page they rated on.
+- In the app the `href` is ignored and `data-app-url` is opened in the app
+  browser with auto login. That variant of the endpoint reports the result and
+  asks the user to close the window. Because the star also carries
+  `data-app-url-resume-action="refresh"`, the app refreshes the content when
+  the window closes, so the new rating appears.
+
+The app cannot do better than this today: the Moodle app has no site plugin
+delegate for text filters (`CoreFilterDelegate` is not in the list of delegates
+site plugins may register, as of app 5.2), so a filter cannot ship JavaScript
+that saves the rating inline. Should that change, the web services below are
+already in place to do it without any server side change.
+
+## Web services
+
+Both functions are part of the official mobile service and are also flagged for
+AJAX, so a custom app or a custom front end can use them directly.
+
+| Function | Type | Purpose |
+| :--- | :--- | :--- |
+| `filter_rating_set_rating` | write | Store the rating of the current user for a criterion in a context |
+| `filter_rating_get_rating` | read | Read the current user rating, the average and the number of ratings |
+
+## Security
+
+The star links are `GET` links that write data, and they must work in two
+different sessions: the browser session, and the separate session the app
+creates when it opens the link with auto login. A session key cannot cover
+both, so each link is signed with an HMAC that is bound to the user, the
+context, the criterion and that one number of stars
+(`\filter_rating\local\rating_token`).
+
+That is deliberately narrower than a session key: a leaked link allows nothing
+but setting that one rating of that one user, and no session key ever ends up
+inside filtered text, where it could be picked up by output caching. If the
+signature is missing or stale the endpoint does not fail, it asks for
+confirmation, and that confirmation is a `POST` protected by the session key.
+
+Return URLs are cleaned with `PARAM_LOCALURL`, so the endpoint cannot be used
+as an open redirect.
+
+## Data protection
+
+The plugin stores, per rating: the user, the course, the context, the
+criterion, the number of stars and the timestamps. Nothing leaves the Moodle
+site.
+
+A full Privacy API provider is implemented, so ratings are included in data
+exports and are removed by deletion requests — per user, per context, and for a
+list of users. Deleting a course context removes the ratings stored in it.
+
+Keep in mind that a criterion with few raters can make an individual rating
+identifiable in the report; treat the criterion names accordingly.
+
+## Accessibility
+
+The widget was built against WCAG 2.2 AA:
+
+- Every star is a real link, so it is reachable and operable by keyboard, with
+  a visible focus outline.
+- The five stars form a labelled group, and each link has an accessible name
+  stating what it will do ("Rate teaching quality with 3 of 5 stars").
+- The current rating is repeated as visually hidden text in a polite live
+  region, so it is never conveyed by colour alone. The star colours reach at
+  least 3:1 against a white background.
+- The star icons themselves are `aria-hidden`, the report tables use header
+  cells and a caption.
+
+This has not been verified with assistive technology or with users. Before
+rolling the plugin out, have the widget checked by a person testing with a
+screen reader, and check the star colours against your theme's background if
+you use a dark or coloured theme.
+
+## Development
+
+```bash
+# Code style, from the Moodle root, with moodlehq/moodle-cs installed
+vendor/bin/phpcs --standard=moodle filter/rating
+
+# Unit tests, after php admin/tool/phpunit/cli/init.php
+vendor/bin/phpunit --filter filter_rating
+```
+
+Neither could be run in the environment this plugin was written in, so both are
+still to be executed against a real installation.
 
 ## License
-For open source projects, say how it is licensed.
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+GNU GPL v3 or later, like Moodle itself.
