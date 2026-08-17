@@ -154,6 +154,79 @@ final class rating_manager_test extends \advanced_testcase {
     }
 
     /**
+     * A criterion is registered once per course, so the app can list it.
+     *
+     * @return void
+     */
+    public function test_record_criterion(): void {
+        global $DB;
+
+        $this->resetAfterTest();
+
+        $course = $this->getDataGenerator()->create_course();
+        $othercourse = $this->getDataGenerator()->create_course();
+
+        rating_manager::record_criterion($course->id, 'teaching quality');
+        rating_manager::record_criterion($course->id, 'teaching quality');
+        rating_manager::record_criterion($course->id, 'materials');
+        rating_manager::record_criterion($othercourse->id, 'teaching quality');
+        rating_manager::record_criterion($course->id, '');
+
+        $this->assertSame(2, $DB->count_records(rating_manager::CRITERION_TABLE, ['courseid' => $course->id]));
+        $this->assertSame(3, $DB->count_records(rating_manager::CRITERION_TABLE));
+    }
+
+    /**
+     * The course criteria carry the figures the app tab shows.
+     *
+     * @return void
+     */
+    public function test_get_course_criteria(): void {
+        $this->resetAfterTest();
+
+        $course = $this->getDataGenerator()->create_course();
+        $context = context_course::instance($course->id);
+        $user = $this->getDataGenerator()->create_and_enrol($course, 'student');
+
+        rating_manager::record_criterion($course->id, 'materials');
+        rating_manager::record_criterion($course->id, 'teaching quality');
+
+        $this->setUser($user);
+        rating_manager::set_rating($context, $course->id, 'materials', 4);
+
+        $criteria = rating_manager::get_course_criteria($course->id);
+        $this->assertCount(2, $criteria);
+
+        // Sorted naturally, so materials comes first.
+        $this->assertSame('materials', $criteria[0]->criterion);
+        $this->assertSame(4, $criteria[0]->userrating);
+        $this->assertSame(1, $criteria[0]->count);
+        $this->assertSame(4.0, $criteria[0]->average);
+
+        $this->assertSame('teaching quality', $criteria[1]->criterion);
+        $this->assertSame(0, $criteria[1]->userrating);
+        $this->assertSame(0, $criteria[1]->count);
+    }
+
+    /**
+     * Only courses that offer a criterion are reported to the app.
+     *
+     * @return void
+     */
+    public function test_get_courses_with_criteria(): void {
+        $this->resetAfterTest();
+
+        $course = $this->getDataGenerator()->create_course();
+        $empty = $this->getDataGenerator()->create_course();
+
+        rating_manager::record_criterion($course->id, 'materials');
+
+        $this->assertSame([(int) $course->id], rating_manager::get_courses_with_criteria());
+        $this->assertSame([(int) $course->id], rating_manager::get_courses_with_criteria([$course->id, $empty->id]));
+        $this->assertSame([], rating_manager::get_courses_with_criteria([$empty->id]));
+    }
+
+    /**
      * Guests and users without the capability may not rate.
      *
      * @return void

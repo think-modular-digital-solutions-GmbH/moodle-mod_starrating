@@ -67,6 +67,15 @@
     display: none;
 }
 
+/*
+ * In the app the stars are the only control on the ratings tab, so they get a
+ * touch target that clears the WCAG 2.2 target size minimum.
+ */
+.filter-rating-app .filter-rating-star {
+    padding: 0.35rem;
+    font-size: 1.5em;
+}
+
 /* Averages in the report sit inside table cells. */
 .filter-rating-static {
     gap: 0.3rem;

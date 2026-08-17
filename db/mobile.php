@@ -17,15 +17,14 @@
 /**
  * Moodle app support for the star rating filter.
  *
- * The filter runs on the server, so the app receives the finished stars inside
- * any formatted text. What it does not have is a way to save a rating, because
- * the app offers no site plugin delegate for text filters.
+ * The app has no site plugin delegate for text filters, so the stars inside
+ * formatted text cannot be made interactive there. What the app does support is
+ * a course tab, and inside a tab a rating can be submitted without a line of
+ * JavaScript: the template uses the app's core-site-plugins-call-ws directive,
+ * which calls filter_rating_set_rating on tap and refreshes the tab.
  *
- * The init handler below closes that gap: the app runs its JavaScript when it
- * loads the site plugins, and that code intercepts the taps on the stars and
- * saves the rating through the filter_rating_set_rating web service. Ratings
- * are therefore given inside the app, without opening a browser and without
- * logging in a second time.
+ * The init method restricts the tab to the courses that actually offer a
+ * criterion, so it does not appear everywhere.
  *
  * @package    filter_rating
  * @copyright  2026 Think Modular
@@ -39,14 +38,26 @@ global $CFG;
 $addons = [
     'filter_rating' => [
         'handlers' => [
-            'rating' => [
-                // No delegate: this handler contributes behaviour, not a screen.
+            'courseratings' => [
+                'delegate' => 'CoreCourseOptionsDelegate',
+                'method' => 'mobile_course_ratings',
                 'init' => 'mobile_init',
+                'displaydata' => [
+                    'title' => 'pluginname',
+                    'class' => 'filter-rating-course-option',
+                    'icon' => 'fas-star',
+                ],
                 'styles' => [
                     'url' => $CFG->wwwroot . '/filter/rating/styles.css',
                     'version' => (int) get_config('filter_rating', 'version'),
                 ],
+                'ptrenabled' => true,
             ],
+        ],
+        'lang' => [
+            ['pluginname', 'filter_rating'],
+            ['nocriteriaincourse', 'filter_rating'],
+            ['ratingsaved', 'filter_rating'],
         ],
     ],
 ];

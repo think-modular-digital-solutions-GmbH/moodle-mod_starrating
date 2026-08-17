@@ -83,29 +83,51 @@ and is not granted to teachers by default.
 
 ## Moodle app
 
-Ratings are given **inside the app**. No browser opens, and nobody logs in a
-second time.
+In the app, ratings are given on a **Ratings tab in the course**, and no
+JavaScript is involved.
 
-The filter runs on the server, so the app receives the finished star markup
-inside any formatted text. What the app is missing is a way to write the rating
-back, because it offers no site plugin delegate for text filters
-(`CoreFilterDelegate` is not in the list of delegates site plugins may register,
-as of app 5.2). `db/mobile.php` closes that gap with an `init` handler, which
-the app runs once when it loads the site plugins, independently of any delegate:
+The stars inside formatted text stay a display only in the app. A link there can
+only be claimed by one of the core content link handlers, which a filter plugin
+cannot register, or be handed to a browser — and the browser route hits
+`tool_mobile`'s auto login lockout of one key every six minutes
+(`autologinmintimebetweenreq`), so the second star anyone taps inside six
+minutes lands on a login form.
 
-- `mobile/init.js` listens for taps on the stars anywhere in the app and saves
-  the rating through `filter_rating_set_rating`, then repaints the stars in
-  place. The tap is caught in the capture phase, so the app never gets as far as
-  opening the star's `href`.
-- The same handler points the app at this plugin's `styles.css`, which the app
-  downloads and applies, so the stars look the same in both places.
-- The `href` on each star stays untouched and is what the browser uses. If the
-  app ever fails to load the plugin's JavaScript, the link still works, it just
-  falls back to opening in a browser.
+What the app does support is a course tab, and inside a site plugin template a
+web service can be called declaratively. `db/mobile.php` registers a
+`CoreCourseOptionsDelegate` handler, and each star in
+`templates/mobile_course_ratings.mustache` carries:
 
-The app renders the star icons as its own SVG icons, which is why a rated star
-is a different icon (`fa-star`) rather than a different colour from an unrated
-one (`fa-star-o`).
+```html
+<a core-site-plugins-call-ws name="filter_rating_set_rating"
+   [params]="{contextid: 42, criterion: 'teaching quality', rating: 3}"
+   refreshOnSuccess="true">
+```
+
+Tapping a star calls the web service and reloads the tab. Everything stays
+inside the app: no browser, no second login, and no plugin JavaScript.
+
+So that the tab knows what a course offers, every criterion is noted in
+`filter_rating_criterion` the first time the filter renders its token. The tab
+is restricted to the courses that actually offer something, which the `init`
+method reports when the app loads the site plugins.
+
+### After installing or changing the app integration
+
+The app fetches site plugins **only when a user logs in** (`CoreEvents.LOGIN`),
+so:
+
+1. On the site: *Site administration → Notifications*, then purge caches —
+   `tool_mobile` caches the handler definitions.
+2. In the app: **log out and log in again.** Clearing the app cache is neither
+   necessary nor sufficient.
+
+If the Ratings tab does not appear at all after that, site plugins are not
+loading on that site, and no app side approach will work until that is fixed.
+
+`filter/rating/styles.css` is served to the app as the handler's stylesheet, so
+the stars look the same in both places. It has to be reachable without logging
+in, which it is as a plain file under the web root.
 
 ## Web services
 

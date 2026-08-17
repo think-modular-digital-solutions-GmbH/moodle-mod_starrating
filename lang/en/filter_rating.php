@@ -56,6 +56,7 @@ $string['groupbycriterion'] = 'Criterion';
 $string['guestcannotrate'] = 'Guests cannot rate. Please log in to submit a rating.';
 $string['invalidcriterion'] = 'The criterion is missing or not valid.';
 $string['invalidrating'] = 'The rating must be a number of stars between 0 and 5.';
+$string['nocriteriaincourse'] = 'Nothing to rate in this course yet.';
 $string['noratingsyet'] = 'No ratings yet';
 $string['noresults'] = 'No ratings match the current filter.';
 $string['notratedyet'] = 'You have not rated {$a} yet.';

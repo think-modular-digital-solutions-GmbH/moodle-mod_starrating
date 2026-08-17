@@ -56,6 +56,7 @@ $string['groupbycriterion'] = 'Kriterium';
 $string['guestcannotrate'] = 'Gäste können nicht bewerten. Bitte melden Sie sich an, um eine Bewertung abzugeben.';
 $string['invalidcriterion'] = 'Das Kriterium fehlt oder ist ungültig.';
 $string['invalidrating'] = 'Die Bewertung muss eine Anzahl von 0 bis 5 Sternen sein.';
+$string['nocriteriaincourse'] = 'In diesem Kurs gibt es noch nichts zu bewerten.';
 $string['noratingsyet'] = 'Noch keine Bewertungen';
 $string['noresults'] = 'Keine Bewertungen entsprechen dem aktuellen Filter.';
 $string['notratedyet'] = 'Sie haben {$a} noch nicht bewertet.';

@@ -9,25 +9,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Rating in the Moodle app opened the in-app browser and asked for another
-  login. Taps on the stars are now handled inside the app and saved through the
-  web service, and the stars update on the spot.
+- Rating in the Moodle app opened a browser and asked for another login, which
+  Moodle's six minute auto login lockout makes unavoidable for a link. Ratings
+  are now given on a Ratings tab inside the app, without leaving it. The stars
+  inside text remain a display only in the app.
 - All five stars looked filled whether or not the criterion had been rated.
   Rated stars are now filled and gold, unrated ones are outlines, in the
   browser and in the app alike.
 
 ### Added
 
+- Ratings tab in the Moodle app, listing the criteria of a course with tappable
+  stars. It calls the rating web service declaratively, so the plugin ships no
+  JavaScript to the app.
 - Star rating filter: the token `{{ rating:criterion }}` is replaced by a five
   star FontAwesome rating anywhere text is filtered in Moodle.
 - Rating endpoint that stores the rating and returns to the page it was given
-  on, plus a Moodle app integration that saves the same rating inside the app.
+  on.
 - Web services `filter_rating_set_rating` and `filter_rating_get_rating`, both
   part of the official mobile service and available over AJAX.
 - Site report under *Site administration → Reports → Star ratings*: averages
   grouped by course, by criterion or by both, filterable by course and
   criterion, plus a sortable, paged and downloadable list of the individual
   ratings.
+- Record of the criteria each course offers, so they can be listed where no
+  filter token is rendered.
 - Settings for showing the average next to the stars and for allowing users to
   withdraw their rating.
 - Capabilities `filter/rating:rate` and `filter/rating:viewreports`.

@@ -27,9 +27,15 @@ use templatable;
 /**
  * The five stars rendered in place of a rating token.
  *
- * Each star is a plain link to rate.php, which works without JavaScript in the
- * browser. In the Moodle app the same markup is used, but the tap is caught by
- * mobile/init.js and saved through a web service, so the app is never left.
+ * Each star is a plain link to rate.php, which stores the rating and returns to
+ * the page it was given on.
+ *
+ * In the Moodle app the stars are rendered as a display only. A link in app
+ * content can either be claimed by one of the core content link handlers, which
+ * a filter plugin cannot register, or be handed to a browser, and the browser
+ * route asks for a login again as soon as the six minute auto login lockout in
+ * tool_mobile bites. Showing the rating without offering a broken way to change
+ * it is the honest option.
  *
  * @package    filter_rating
  * @copyright  2026 Think Modular
@@ -62,7 +68,8 @@ class rating_widget implements renderable, templatable {
     public function export_for_template(renderer_base $output): array {
         $userrating = rating_manager::get_user_rating($this->courseid, $this->criterion);
         $stats = rating_manager::get_stats($this->courseid, $this->criterion);
-        $canrate = rating_manager::can_rate($this->context);
+        // The app gets the read only variant, see the class comment.
+        $canrate = rating_manager::can_rate($this->context) && !\core_useragent::is_moodle_app();
         $showaverage = (bool) get_config('filter_rating', 'showaverage');
         $allowclear = (bool) get_config('filter_rating', 'allowclear');
 

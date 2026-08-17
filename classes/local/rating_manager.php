@@ -39,6 +39,9 @@ class rating_manager {
     /** @var string Table holding the ratings. */
     public const TABLE = 'filter_rating';
 
+    /** @var string Table listing which criteria a course offers. */
+    public const CRITERION_TABLE = 'filter_rating_criterion';
+
     /** @var int Maximum length of a criterion identifier. */
     public const CRITERION_MAXLENGTH = 100;
 
@@ -47,6 +50,9 @@ class rating_manager {
 
     /** @var array<string, stdClass> Request level cache of statistics, keyed by course and criterion. */
     protected static array $stats = [];
+
+    /** @var array<string, bool> Criteria already known to be registered this request. */
+    protected static array $registered = [];
 
     /**
      * Bring a criterion from a filter token or a request into its canonical form.
@@ -196,6 +202,95 @@ class rating_manager {
         $event->trigger();
 
         return $rating;
+    }
+
+    /**
+     * Remember that a course offers a criterion.
+     *
+     * The filter only knows a criterion while it renders the token that carries
+     * it. The Moodle app lists the criteria of a course without rendering any
+     * text, so every criterion is noted here the first time it is seen.
+     *
+     * @param int $courseid Course the criterion appeared in.
+     * @param string $criterion Normalised criterion.
+     * @return void
+     */
+    public static function record_criterion(int $courseid, string $criterion): void {
+        global $DB;
+
+        if ($criterion === '') {
+            return;
+        }
+
+        $key = $courseid . ':' . $criterion;
+        if (isset(self::$registered[$key])) {
+            return;
+        }
+        self::$registered[$key] = true;
+
+        $conditions = ['courseid' => $courseid, 'criterion' => $criterion];
+        if ($DB->record_exists(self::CRITERION_TABLE, $conditions)) {
+            return;
+        }
+
+        try {
+            $DB->insert_record(self::CRITERION_TABLE, (object) ($conditions + ['timecreated' => time()]));
+        } catch (\dml_exception $e) {
+            // Another request registered the same criterion first, which is fine.
+            debugging('filter_rating: could not register criterion, ' . $e->getMessage(), DEBUG_DEVELOPER);
+        }
+    }
+
+    /**
+     * The criteria a course offers, with the figures needed to display them.
+     *
+     * @param int $courseid Course to look at.
+     * @param int|null $userid Whose rating to report, defaults to the current user.
+     * @return stdClass[] Objects with criterion, userrating, count and average.
+     */
+    public static function get_course_criteria(int $courseid, ?int $userid = null): array {
+        global $DB;
+
+        $criteria = $DB->get_fieldset_select(self::CRITERION_TABLE, 'criterion', 'courseid = :courseid',
+            ['courseid' => $courseid]);
+        sort($criteria, SORT_NATURAL | SORT_FLAG_CASE);
+
+        $result = [];
+        foreach ($criteria as $criterion) {
+            $stats = self::get_stats($courseid, $criterion);
+
+            $entry = new stdClass();
+            $entry->criterion = $criterion;
+            $entry->userrating = self::get_user_rating($courseid, $criterion, $userid);
+            $entry->count = $stats->count;
+            $entry->average = $stats->average;
+            $result[] = $entry;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Courses that offer at least one criterion.
+     *
+     * @param array $courseids Restrict to these courses, empty for all.
+     * @return int[] Course ids.
+     */
+    public static function get_courses_with_criteria(array $courseids = []): array {
+        global $DB;
+
+        if (empty($courseids)) {
+            return array_map('intval', $DB->get_fieldset_sql(
+                'SELECT DISTINCT courseid FROM {' . self::CRITERION_TABLE . '}'
+            ));
+        }
+
+        [$insql, $params] = $DB->get_in_or_equal($courseids, SQL_PARAMS_NAMED, 'crs');
+
+        return array_map('intval', $DB->get_fieldset_sql(
+            'SELECT DISTINCT courseid FROM {' . self::CRITERION_TABLE . '} WHERE courseid ' . $insql,
+            $params
+        ));
     }
 
     /**

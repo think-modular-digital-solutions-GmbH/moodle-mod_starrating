@@ -37,16 +37,23 @@ Target: Moodle 4.3 and later, developed against Moodle 4.5 LTS.
   text, where output caching can reach it, and a scoped HMAC leaks far less
   than a session key. A missing or stale token falls back to a confirmation,
   which is a `POST` protected by the session key.
-- **The app path goes through `db/mobile.php`, and it never opens a browser.**
-  `CoreFilterDelegate` is not a site plugin delegate (checked against app 5.2),
-  but a handler in `db/mobile.php` may declare `init` and `styles` with no
-  delegate at all: `registerHandler()` runs both before the delegate switch,
-  and an unknown or absent delegate simply falls through to `default:`. So
-  `mobile/init.js` runs at app start and intercepts the taps in the capture
-  phase, and the app downloads the plugin's `styles.css`.
-  **Never send the user to the in-app browser** (`data-app-url`,
-  `data-app-open-in="inappbrowser"`): it costs them a second login and was
-  rejected outright.
+- **In the app, rating happens on the course tab, never through a link.**
+  `CoreFilterDelegate` is not a site plugin delegate, and content link handlers
+  are auto-registered only for site plugin *modules*, so a link in filtered text
+  can only reach a browser — where `tool_mobile`'s six minute auto login lockout
+  (`autologinkeygenerationlockout`) means every second tap asks for a login.
+  Both were tried and rejected. The stars in text are therefore read only in the
+  app (`core_useragent::is_moodle_app()` in `rating_widget`).
+- **The app tab ships no JavaScript.** `db/mobile.php` registers a
+  `CoreCourseOptionsDelegate` handler and the template uses the app's
+  `core-site-plugins-call-ws` directive. `[params]` is an Angular expression
+  built in `mobile::build_params()`, escaped for a single quoted string there
+  and HTML-escaped again by the template. `displaydata` is mandatory or the app
+  ignores the handler, and `displaydata.title` is a lang key that must also
+  appear in the `lang` list of `$addons`.
+- **`filter_rating_criterion` exists because the app has no token to read.**
+  The filter records each criterion as it renders it; the tab and the `init`
+  restrict list read from there.
 - **Both `classes/text_filter.php` and `filter.php` are shipped.** Moodle 4.5+
   uses the first, older releases the second, and core only falls back to
   `filter.php` when the new class is absent, so neither triggers a deprecation
@@ -58,16 +65,29 @@ Target: Moodle 4.3 and later, developed against Moodle 4.5 LTS.
   `-o` suffix to its `regular` SVG library (`CoreIcons.fixFontAwesomeIconName`).
   Do not "fix" this back to two solid stars in different colours — that was the
   first attempt and it looked like five filled stars.
-- **Any URL handed to the app must be absolute** (`$url->out(false)`), never
-  `out_as_local_url()`. The app's `CoreUrl.toAbsoluteURL()` drops the parent
-  path for URLs starting with `/`, which 404s on any Moodle installed in a
-  subdirectory.
-- **Services in the app's plugin JavaScript come from `this`**, under their
-  provider class names: `this.CoreSitesProvider`, `this.CoreToastsService`,
-  `this.CoreAlertsService`. Bare globals do not resolve, and a top level
-  `return` is a syntax error because the code is passed to `eval`.
-- **Display strings for the app come from the web service** (`statustext`,
-  `averagetext`, `message`), so nothing has to be translated in JavaScript.
+- **Any URL ever handed to the app must be absolute** (`$url->out(false)`),
+  never `out_as_local_url()`: `CoreUrl.toAbsoluteURL()` drops the parent path
+  for URLs starting with `/`, which 404s on a Moodle in a subdirectory.
+
+## Plan B, agreed 2026-08-17 — hold in reserve
+
+If in-app rating through the course tab does not work either, **rework the
+plugin completely as an activity module instead of a text filter**, to the
+user's spec:
+
+- An activity, not a filter. `mod_rating` replaces `filter_rating`.
+- It renders its stars **directly on the course page**, the way a label renders
+  its text inline, rather than only on its own view page.
+- **The criterion is the name of the activity** in the course, so there is no
+  token and no criterion string to parse.
+
+That shape also solves the app problem by itself: the app auto-registers
+`CoreContentLinksModuleIndexHandler` for site plugin modules, so a link to
+`/mod/rating/view.php?id=X` opens natively in the app, and the module's own app
+page can rate through `core-site-plugins-call-ws`.
+
+Do not start this while the course tab is still being tried. Do not lose it
+either — it is the agreed fallback, not a suggestion.
 
 ## Verification
 
@@ -80,6 +100,10 @@ Moodle app source at `~/Documents/moodleapp/app` — **read them to verify API
 signatures instead of guessing.** That is how the
 `core_user\fields::get_sql()` argument order and the missing app filter
 delegate were caught.
+
+If app side code is ever added back, note that the app fetches site plugins only
+on `CoreEvents.LOGIN`, so a logged in app never sees a new or changed
+`db/mobile.php` until the user logs out and in again.
 
 Against a real installation:
 

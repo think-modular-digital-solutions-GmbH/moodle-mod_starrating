@@ -85,11 +85,16 @@ class token_processor {
             return null;
         }
 
-        // Only a real page can be returned to. During a web service call the app
-        // handles the click itself, so no return URL is needed.
+        // Only a real page can be returned to. During a web service call there
+        // is nothing to return to, and the stars are read only there anyway.
         $returnurl = $PAGE->has_set_url() ? $PAGE->url : null;
 
-        $widget = new rating_widget($context, rating_manager::get_courseid_from_context($context), $criterion, $returnurl);
+        $courseid = rating_manager::get_courseid_from_context($context);
+
+        // Note the criterion, so the Moodle app can list it without this text.
+        rating_manager::record_criterion($courseid, $criterion);
+
+        $widget = new rating_widget($context, $courseid, $criterion, $returnurl);
 
         return $PAGE->get_renderer('filter_rating')->render($widget);
     }
