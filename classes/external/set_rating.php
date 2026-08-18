@@ -14,18 +14,18 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
-namespace filter_rating\external;
+namespace mod_starrating\external;
 
 use core_external\external_api;
 use core_external\external_function_parameters;
 use core_external\external_single_structure;
 use core_external\external_value;
-use filter_rating\local\rating_manager;
+use mod_starrating\local\rating_manager;
 
 /**
  * Save the star rating of the current user, used by the Moodle app.
  *
- * @package    filter_rating
+ * @package    mod_starrating
  * @copyright  2026 Think Modular
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -38,8 +38,7 @@ class set_rating extends external_api {
      */
     public static function execute_parameters(): external_function_parameters {
         return new external_function_parameters([
-            'contextid' => new external_value(PARAM_INT, 'Context the rating is submitted from'),
-            'criterion' => new external_value(PARAM_TEXT, 'The criterion being rated'),
+            'cmid' => new external_value(PARAM_INT, 'Course module id of the activity'),
             'rating' => new external_value(PARAM_INT, 'Number of stars, 1 to 5, or 0 to withdraw the rating'),
         ]);
     }
@@ -47,39 +46,36 @@ class set_rating extends external_api {
     /**
      * Save the rating.
      *
-     * @param int $contextid Context the rating is submitted from.
-     * @param string $criterion The criterion being rated.
+     * @param int $cmid Course module id.
      * @param int $rating Number of stars, 0 to withdraw.
      * @return array Result as described by execute_returns().
      */
-    public static function execute(int $contextid, string $criterion, int $rating): array {
+    public static function execute(int $cmid, int $rating): array {
         $params = self::validate_parameters(self::execute_parameters(), [
-            'contextid' => $contextid,
-            'criterion' => $criterion,
+            'cmid' => $cmid,
             'rating' => $rating,
         ]);
 
-        $context = \context::instance_by_id($params['contextid']);
+        [$course, $cm] = get_course_and_cm_from_cmid($params['cmid'], 'starrating');
+        $context = \context_module::instance($cm->id);
         self::validate_context($context);
         rating_manager::require_can_rate($context);
 
-        $criterion = rating_manager::normalise_criterion($params['criterion']);
-        $courseid = rating_manager::get_courseid_from_context($context);
+        rating_manager::set_rating($context, (int) $cm->instance, $params['rating']);
 
-        rating_manager::set_rating($context, $courseid, $criterion, $params['rating']);
-
-        $stats = rating_manager::get_stats($courseid, $criterion);
-        $userrating = rating_manager::get_user_rating($courseid, $criterion);
+        $stats = rating_manager::get_stats((int) $cm->instance);
+        $userrating = rating_manager::get_user_rating((int) $cm->instance);
+        $name = format_string($cm->name, true, ['context' => $context]);
 
         return [
             'userrating' => $userrating,
             'average' => $stats->average,
             'count' => $stats->count,
-            'statustext' => rating_manager::get_status_text($criterion, $userrating),
+            'statustext' => rating_manager::get_status_text($name, $userrating),
             'averagetext' => rating_manager::get_average_text($stats),
             'message' => $params['rating'] > 0
-                ? get_string('ratingsaved', 'filter_rating')
-                : get_string('ratingcleared', 'filter_rating'),
+                ? get_string('ratingsaved', 'mod_starrating')
+                : get_string('ratingcleared', 'mod_starrating'),
         ];
     }
 
@@ -91,7 +87,7 @@ class set_rating extends external_api {
     public static function execute_returns(): external_single_structure {
         return new external_single_structure([
             'userrating' => new external_value(PARAM_INT, 'Stars the current user gave, 0 when not rated'),
-            'average' => new external_value(PARAM_FLOAT, 'Average of all ratings for the criterion'),
+            'average' => new external_value(PARAM_FLOAT, 'Average of all ratings for the activity'),
             'count' => new external_value(PARAM_INT, 'Number of ratings the average is based on'),
             'statustext' => new external_value(PARAM_TEXT, 'The rating of the user in words'),
             'averagetext' => new external_value(PARAM_TEXT, 'The average in words'),

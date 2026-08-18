@@ -14,21 +14,20 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
-namespace filter_rating\local;
+namespace mod_starrating\local;
 
 /**
  * Signs the rating links so that they cannot be forged.
  *
- * A star is a link, and that link has to work in two different sessions: the
- * browser session, and the separate session the Moodle app creates when it
- * opens the link with auto login. A session key cannot cover both, so each link
- * carries a token that is bound to the user and to exactly one rating instead.
+ * A star is a link that writes, and the credential it carries is rendered into
+ * the course page, where output caching can reach it. Rather than a session
+ * key, each link carries a token bound to the user, the course module and
+ * exactly one number of stars.
  *
  * Compared to a session key this is the narrower credential: even if a token
- * leaks it allows nothing but setting that one rating of that one user, and no
- * session key ever ends up inside filtered text.
+ * leaks it allows nothing but setting that one rating of that one user.
  *
- * @package    filter_rating
+ * @package    mod_starrating
  * @copyright  2026 Think Modular
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -38,13 +37,12 @@ class rating_token {
      * Sign one rating link.
      *
      * @param int $userid User the link belongs to.
-     * @param int $contextid Context the rating is submitted from.
-     * @param string $criterion Normalised criterion.
+     * @param int $cmid Course module the rating belongs to.
      * @param int $rating Number of stars the link submits.
      * @return string The token.
      */
-    public static function generate(int $userid, int $contextid, string $criterion, int $rating): string {
-        $data = implode('|', [$userid, $contextid, $criterion, $rating]);
+    public static function generate(int $userid, int $cmid, int $rating): string {
+        $data = implode('|', [$userid, $cmid, $rating]);
 
         return hash_hmac('sha256', $data, self::get_secret());
     }
@@ -54,17 +52,16 @@ class rating_token {
      *
      * @param string $token Token to check.
      * @param int $userid User the link should belong to.
-     * @param int $contextid Context the rating is submitted from.
-     * @param string $criterion Normalised criterion.
+     * @param int $cmid Course module the rating belongs to.
      * @param int $rating Number of stars.
      * @return bool
      */
-    public static function validate(string $token, int $userid, int $contextid, string $criterion, int $rating): bool {
+    public static function validate(string $token, int $userid, int $cmid, int $rating): bool {
         if ($token === '') {
             return false;
         }
 
-        return hash_equals(self::generate($userid, $contextid, $criterion, $rating), $token);
+        return hash_equals(self::generate($userid, $cmid, $rating), $token);
     }
 
     /**
@@ -73,11 +70,11 @@ class rating_token {
      * @return string
      */
     protected static function get_secret(): string {
-        $secret = get_config('filter_rating', 'tokensecret');
+        $secret = get_config('mod_starrating', 'tokensecret');
 
         if (empty($secret)) {
             $secret = random_string(40);
-            set_config('tokensecret', $secret, 'filter_rating');
+            set_config('tokensecret', $secret, 'mod_starrating');
         }
 
         return $secret;

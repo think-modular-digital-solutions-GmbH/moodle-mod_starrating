@@ -14,91 +14,67 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
-namespace filter_rating\local;
+namespace mod_starrating\local;
 
 use context;
-use filter_rating\event\rating_submitted;
+use mod_starrating\event\rating_submitted;
 use stdClass;
 
 /**
  * Reads and writes star ratings.
  *
- * A rating is identified by course, criterion and user. The same criterion used
- * in several places of one course is therefore one rating, which is what makes
- * the course and criterion averages in the report meaningful.
+ * One rating per activity and user. The criterion is the name of the activity,
+ * so nothing has to be parsed or matched.
  *
- * @package    filter_rating
+ * @package    mod_starrating
  * @copyright  2026 Think Modular
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class rating_manager {
 
-    /** @var int Number of stars a criterion is rated with. */
+    /** @var int Number of stars an activity is rated with. */
     public const MAX_STARS = 5;
 
     /** @var string Table holding the ratings. */
-    public const TABLE = 'filter_rating';
+    public const TABLE = 'starrating_rating';
 
-    /** @var string Table listing which criteria a course offers. */
-    public const CRITERION_TABLE = 'filter_rating_criterion';
-
-    /** @var int Maximum length of a criterion identifier. */
-    public const CRITERION_MAXLENGTH = 100;
-
-    /** @var array<string, int> Request level cache of user ratings, keyed by course, user and criterion. */
+    /** @var array<string, int> Request level cache of user ratings, keyed by activity and user. */
     protected static array $userratings = [];
 
-    /** @var array<string, stdClass> Request level cache of statistics, keyed by course and criterion. */
+    /** @var array<int, stdClass> Request level cache of statistics, keyed by activity. */
     protected static array $stats = [];
-
-    /** @var array<string, bool> Criteria already known to be registered this request. */
-    protected static array $registered = [];
-
-    /**
-     * Bring a criterion from a filter token or a request into its canonical form.
-     *
-     * @param string $criterion Raw criterion.
-     * @return string Normalised criterion, empty if nothing usable is left.
-     */
-    public static function normalise_criterion(string $criterion): string {
-        $criterion = clean_param($criterion, PARAM_TEXT);
-        $criterion = trim(preg_replace('/\s+/u', ' ', $criterion));
-
-        return \core_text::substr($criterion, 0, self::CRITERION_MAXLENGTH);
-    }
 
     /**
      * Whether the current user may submit a rating in this context.
      *
-     * @param context $context Context the rating is displayed in.
+     * @param context $context Context of the activity.
      * @return bool
      */
     public static function can_rate(context $context): bool {
-        return isloggedin() && !isguestuser() && has_capability('filter/rating:rate', $context);
+        return isloggedin() && !isguestuser() && has_capability('mod/starrating:rate', $context);
     }
 
     /**
      * Throw if the current user may not submit a rating in this context.
      *
-     * @param context $context Context the rating is submitted from.
+     * @param context $context Context of the activity.
      * @return void
      */
     public static function require_can_rate(context $context): void {
         if (!isloggedin() || isguestuser()) {
-            throw new \moodle_exception('guestcannotrate', 'filter_rating');
+            throw new \moodle_exception('guestcannotrate', 'mod_starrating');
         }
-        require_capability('filter/rating:rate', $context);
+        require_capability('mod/starrating:rate', $context);
     }
 
     /**
-     * The rating a user gave for a criterion.
+     * The rating a user gave to an activity.
      *
-     * @param int $courseid Course the criterion belongs to.
-     * @param string $criterion Normalised criterion.
+     * @param int $starratingid Activity instance id.
      * @param int|null $userid Defaults to the current user.
      * @return int Number of stars, 0 when the user has not rated yet.
      */
-    public static function get_user_rating(int $courseid, string $criterion, ?int $userid = null): int {
+    public static function get_user_rating(int $starratingid, ?int $userid = null): int {
         global $DB, $USER;
 
         $userid = $userid ?? (int) $USER->id;
@@ -106,11 +82,10 @@ class rating_manager {
             return 0;
         }
 
-        $key = $courseid . ':' . $userid . ':' . $criterion;
+        $key = $starratingid . ':' . $userid;
         if (!array_key_exists($key, self::$userratings)) {
             self::$userratings[$key] = (int) $DB->get_field(self::TABLE, 'rating', [
-                'courseid' => $courseid,
-                'criterion' => $criterion,
+                'starratingid' => $starratingid,
                 'userid' => $userid,
             ]);
         }
@@ -119,57 +94,49 @@ class rating_manager {
     }
 
     /**
-     * Number of ratings and average for a criterion.
+     * Number of ratings and average for an activity.
      *
-     * @param int $courseid Course the criterion belongs to.
-     * @param string $criterion Normalised criterion.
+     * @param int $starratingid Activity instance id.
      * @return stdClass Object with the int property count and the float property average.
      */
-    public static function get_stats(int $courseid, string $criterion): stdClass {
+    public static function get_stats(int $starratingid): stdClass {
         global $DB;
 
-        $key = $courseid . ':' . $criterion;
-        if (!array_key_exists($key, self::$stats)) {
+        if (!array_key_exists($starratingid, self::$stats)) {
             $sql = 'SELECT COUNT(id) AS numratings, AVG(rating) AS avgrating
                       FROM {' . self::TABLE . '}
-                     WHERE courseid = :courseid AND criterion = :criterion AND rating > 0';
-            $record = $DB->get_record_sql($sql, ['courseid' => $courseid, 'criterion' => $criterion]);
+                     WHERE starratingid = :starratingid AND rating > 0';
+            $record = $DB->get_record_sql($sql, ['starratingid' => $starratingid]);
 
             $stats = new stdClass();
             $stats->count = (int) ($record->numratings ?? 0);
             $stats->average = $stats->count ? round((float) $record->avgrating, 2) : 0.0;
 
-            self::$stats[$key] = $stats;
+            self::$stats[$starratingid] = $stats;
         }
 
-        return self::$stats[$key];
+        return self::$stats[$starratingid];
     }
 
     /**
-     * Store the rating of a user for a criterion, replacing any earlier rating.
+     * Store the rating of a user, replacing any earlier rating.
      *
-     * @param context $context Context the rating was submitted from.
-     * @param int $courseid Course the criterion belongs to.
-     * @param string $criterion Criterion, normalised by this method.
+     * @param context $context Context of the activity.
+     * @param int $starratingid Activity instance id.
      * @param int $rating Number of stars, 1 to 5, or 0 to withdraw the rating.
      * @param int|null $userid Defaults to the current user.
      * @return int The stored rating.
      */
-    public static function set_rating(context $context, int $courseid, string $criterion, int $rating,
-            ?int $userid = null): int {
+    public static function set_rating(context $context, int $starratingid, int $rating, ?int $userid = null): int {
         global $DB, $USER;
 
         $userid = $userid ?? (int) $USER->id;
-        $criterion = self::normalise_criterion($criterion);
 
-        if ($criterion === '') {
-            throw new \moodle_exception('invalidcriterion', 'filter_rating');
-        }
         if ($rating < 0 || $rating > self::MAX_STARS) {
-            throw new \moodle_exception('invalidrating', 'filter_rating');
+            throw new \moodle_exception('invalidrating', 'mod_starrating');
         }
 
-        $conditions = ['courseid' => $courseid, 'criterion' => $criterion, 'userid' => $userid];
+        $conditions = ['starratingid' => $starratingid, 'userid' => $userid];
         $existing = $DB->get_record(self::TABLE, $conditions);
         $now = time();
 
@@ -179,12 +146,10 @@ class rating_manager {
             }
         } else if ($existing) {
             $existing->rating = $rating;
-            $existing->contextid = $context->id;
             $existing->timemodified = $now;
             $DB->update_record(self::TABLE, $existing);
         } else {
             $record = (object) $conditions;
-            $record->contextid = $context->id;
             $record->rating = $rating;
             $record->timecreated = $now;
             $record->timemodified = $now;
@@ -195,9 +160,9 @@ class rating_manager {
 
         $event = rating_submitted::create([
             'context' => $context,
-            'courseid' => $courseid,
+            'objectid' => $starratingid,
             'relateduserid' => $userid === (int) $USER->id ? null : $userid,
-            'other' => ['criterion' => $criterion, 'rating' => $rating],
+            'other' => ['rating' => $rating],
         ]);
         $event->trigger();
 
@@ -205,111 +170,22 @@ class rating_manager {
     }
 
     /**
-     * Remember that a course offers a criterion.
-     *
-     * The filter only knows a criterion while it renders the token that carries
-     * it. The Moodle app lists the criteria of a course without rendering any
-     * text, so every criterion is noted here the first time it is seen.
-     *
-     * @param int $courseid Course the criterion appeared in.
-     * @param string $criterion Normalised criterion.
-     * @return void
-     */
-    public static function record_criterion(int $courseid, string $criterion): void {
-        global $DB;
-
-        if ($criterion === '') {
-            return;
-        }
-
-        $key = $courseid . ':' . $criterion;
-        if (isset(self::$registered[$key])) {
-            return;
-        }
-        self::$registered[$key] = true;
-
-        $conditions = ['courseid' => $courseid, 'criterion' => $criterion];
-        if ($DB->record_exists(self::CRITERION_TABLE, $conditions)) {
-            return;
-        }
-
-        try {
-            $DB->insert_record(self::CRITERION_TABLE, (object) ($conditions + ['timecreated' => time()]));
-        } catch (\dml_exception $e) {
-            // Another request registered the same criterion first, which is fine.
-            debugging('filter_rating: could not register criterion, ' . $e->getMessage(), DEBUG_DEVELOPER);
-        }
-    }
-
-    /**
-     * The criteria a course offers, with the figures needed to display them.
-     *
-     * @param int $courseid Course to look at.
-     * @param int|null $userid Whose rating to report, defaults to the current user.
-     * @return stdClass[] Objects with criterion, userrating, count and average.
-     */
-    public static function get_course_criteria(int $courseid, ?int $userid = null): array {
-        global $DB;
-
-        $criteria = $DB->get_fieldset_select(self::CRITERION_TABLE, 'criterion', 'courseid = :courseid',
-            ['courseid' => $courseid]);
-        sort($criteria, SORT_NATURAL | SORT_FLAG_CASE);
-
-        $result = [];
-        foreach ($criteria as $criterion) {
-            $stats = self::get_stats($courseid, $criterion);
-
-            $entry = new stdClass();
-            $entry->criterion = $criterion;
-            $entry->userrating = self::get_user_rating($courseid, $criterion, $userid);
-            $entry->count = $stats->count;
-            $entry->average = $stats->average;
-            $result[] = $entry;
-        }
-
-        return $result;
-    }
-
-    /**
-     * Courses that offer at least one criterion.
-     *
-     * @param array $courseids Restrict to these courses, empty for all.
-     * @return int[] Course ids.
-     */
-    public static function get_courses_with_criteria(array $courseids = []): array {
-        global $DB;
-
-        if (empty($courseids)) {
-            return array_map('intval', $DB->get_fieldset_sql(
-                'SELECT DISTINCT courseid FROM {' . self::CRITERION_TABLE . '}'
-            ));
-        }
-
-        [$insql, $params] = $DB->get_in_or_equal($courseids, SQL_PARAMS_NAMED, 'crs');
-
-        return array_map('intval', $DB->get_fieldset_sql(
-            'SELECT DISTINCT courseid FROM {' . self::CRITERION_TABLE . '} WHERE courseid ' . $insql,
-            $params
-        ));
-    }
-
-    /**
      * The rating of a user in words, so that it is never carried by the stars alone.
      *
-     * @param string $criterion Normalised criterion.
+     * @param string $name Name of the activity, which is the criterion.
      * @param int $userrating Number of stars the user gave.
      * @return string
      */
-    public static function get_status_text(string $criterion, int $userrating): string {
+    public static function get_status_text(string $name, int $userrating): string {
         if ($userrating > 0) {
-            return get_string('yourrating', 'filter_rating', (object) [
+            return get_string('yourrating', 'mod_starrating', (object) [
                 'stars' => $userrating,
                 'max' => self::MAX_STARS,
-                'criterion' => $criterion,
+                'criterion' => $name,
             ]);
         }
 
-        return get_string('notratedyet', 'filter_rating', $criterion);
+        return get_string('notratedyet', 'mod_starrating', $name);
     }
 
     /**
@@ -320,10 +196,10 @@ class rating_manager {
      */
     public static function get_average_text(stdClass $stats): string {
         if ($stats->count === 0) {
-            return get_string('noratingsyet', 'filter_rating');
+            return get_string('noratingsyet', 'mod_starrating');
         }
 
-        return get_string('averagetext', 'filter_rating', (object) [
+        return get_string('averagetext', 'mod_starrating', (object) [
             'average' => format_float($stats->average, 1),
             'max' => self::MAX_STARS,
             'count' => $stats->count,
@@ -338,17 +214,5 @@ class rating_manager {
     public static function reset_caches(): void {
         self::$userratings = [];
         self::$stats = [];
-    }
-
-    /**
-     * The course a context belongs to, or the site course outside any course.
-     *
-     * @param context $context Context to resolve.
-     * @return int Course id.
-     */
-    public static function get_courseid_from_context(context $context): int {
-        $coursecontext = $context->get_course_context(false);
-
-        return $coursecontext ? (int) $coursecontext->instanceid : (int) SITEID;
     }
 }

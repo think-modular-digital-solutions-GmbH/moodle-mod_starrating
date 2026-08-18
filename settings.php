@@ -15,9 +15,9 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Settings and report registration for the star rating filter.
+ * Settings and report registration for the star rating activity.
  *
- * @package    filter_rating
+ * @package    mod_starrating
  * @copyright  2026 Think Modular
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -26,23 +26,23 @@ defined('MOODLE_INTERNAL') || die();
 
 if ($ADMIN->fulltree) {
     $settings->add(new admin_setting_configcheckbox(
-        'filter_rating/showaverage',
-        get_string('showaverage', 'filter_rating'),
-        get_string('showaverage_desc', 'filter_rating'),
+        'mod_starrating/showaverage',
+        get_string('showaverage', 'mod_starrating'),
+        get_string('showaverage_desc', 'mod_starrating'),
         1
     ));
 
     $settings->add(new admin_setting_configcheckbox(
-        'filter_rating/allowclear',
-        get_string('allowclear', 'filter_rating'),
-        get_string('allowclear_desc', 'filter_rating'),
+        'mod_starrating/allowclear',
+        get_string('allowclear', 'mod_starrating'),
+        get_string('allowclear_desc', 'mod_starrating'),
         1
     ));
 }
 
 $ADMIN->add('reports', new admin_externalpage(
-    'filterratingreport',
-    get_string('report', 'filter_rating'),
-    new moodle_url('/filter/rating/report.php'),
-    'filter/rating:viewreports'
+    'starratingreport',
+    get_string('report', 'mod_starrating'),
+    new moodle_url('/mod/starrating/report.php'),
+    'mod/starrating:viewreports'
 ));

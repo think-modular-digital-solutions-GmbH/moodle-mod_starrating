@@ -14,29 +14,25 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
-namespace filter_rating;
-
-use filter_rating\local\token_processor;
+namespace mod_starrating\event;
 
 /**
- * Star rating filter for Moodle 4.5 and later.
+ * Fired when a star rating activity page is viewed.
  *
- * On older releases the identical filter in filter.php is used instead.
- *
- * @package    filter_rating
+ * @package    mod_starrating
  * @copyright  2026 Think Modular
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class text_filter extends \core_filters\text_filter {
+class course_module_viewed extends \core\event\course_module_viewed {
 
     /**
-     * Replace every rating token with a star rating widget.
+     * Set the basic event properties.
      *
-     * @param string $text Text being filtered.
-     * @param array $options Filter options, unused.
-     * @return string Filtered text.
+     * @return void
      */
-    public function filter($text, array $options = []) {
-        return token_processor::process((string) $text, $this->context);
+    protected function init() {
+        $this->data['crud'] = 'r';
+        $this->data['edulevel'] = self::LEVEL_PARTICIPATING;
+        $this->data['objecttable'] = 'starrating';
     }
 }

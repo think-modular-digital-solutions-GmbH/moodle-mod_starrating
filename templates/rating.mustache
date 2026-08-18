@@ -15,23 +15,22 @@
     along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 }}
 {{!
-    @template filter_rating/rating
+    @template mod_starrating/rating
 
-    Interactive five star rating.
+    The five stars of a star rating activity, on the web.
 
-    Each star is a real link, so rating works without JavaScript. In the Moodle
-    app the same markup is used, but mobile/init.js catches the tap and saves the
-    rating through a web service, so the app is never left.
+    Rendered inline on the course page the way a label renders its text, and
+    again on the activity page. Every star is a real link, so rating works
+    without JavaScript.
 
-    A rated star is fa-star, an unrated one fa-star-o. Both render everywhere the
-    plugin supports: FontAwesome 4 knows fa-star-o natively, FontAwesome 6 maps
-    it to the regular family through Moodle's v4 shims, and the app resolves the
-    -o suffix to its regular SVG library.
+    A rated star is fa-star, an unrated one fa-star-o. Both render on every
+    FontAwesome version Moodle has shipped, the v4 shims mapping fa-star-o to
+    the regular family.
 
     Context variables required for this template:
-    * criterion string The criterion being rated
-    * contextid int Context the widget is displayed in
-    * courseid int Course the criterion belongs to
+    * cmid int Course module id
+    * name string Name of the activity, which is the criterion
+    * showname bool Whether to show the name above the stars
     * userrating int Stars the current user gave, 0 when not rated
     * count int Number of ratings
     * average float Average rating
@@ -41,69 +40,66 @@
     * statustext string The current user rating in words
     * showaverage bool Whether to show the average
     * averagetext string The average in words
-    * showclear bool Whether the withdraw link is rendered at all
-    * canclear bool Whether the withdraw link is currently visible
+    * canclear bool Whether the withdraw link is shown
     * clearurl string Link that withdraws the rating
     * clearlabel string Visible text of the withdraw link
     * clearaltlabel string Accessible name of the withdraw link
 
     Example context (json):
     {
-        "criterion": "teaching quality",
-        "contextid": 42,
-        "courseid": 7,
+        "cmid": 12,
+        "name": "Teaching quality",
+        "showname": true,
         "userrating": 3,
         "count": 12,
         "average": 3.8,
         "canrate": true,
         "stars": [
-            {"value": 1, "on": true, "url": "#", "label": "Rate teaching quality with 1 of 5 stars"},
-            {"value": 2, "on": true, "url": "#", "label": "Rate teaching quality with 2 of 5 stars"},
-            {"value": 3, "on": true, "url": "#", "label": "Rate teaching quality with 3 of 5 stars"},
-            {"value": 4, "on": false, "url": "#", "label": "Rate teaching quality with 4 of 5 stars"},
-            {"value": 5, "on": false, "url": "#", "label": "Rate teaching quality with 5 of 5 stars"}
+            {"value": 1, "on": true, "url": "#", "label": "Rate Teaching quality with 1 of 5 stars"},
+            {"value": 2, "on": true, "url": "#", "label": "Rate Teaching quality with 2 of 5 stars"},
+            {"value": 3, "on": true, "url": "#", "label": "Rate Teaching quality with 3 of 5 stars"},
+            {"value": 4, "on": false, "url": "#", "label": "Rate Teaching quality with 4 of 5 stars"},
+            {"value": 5, "on": false, "url": "#", "label": "Rate Teaching quality with 5 of 5 stars"}
         ],
-        "grouplabel": "Star rating for teaching quality",
-        "statustext": "Your rating for teaching quality: 3 of 5 stars",
+        "grouplabel": "Star rating for Teaching quality",
+        "statustext": "Your rating for Teaching quality: 3 of 5 stars",
         "showaverage": true,
         "averagetext": "Average 3.8 of 5 from 12 ratings",
-        "showclear": true,
         "canclear": true,
         "clearurl": "#",
         "clearlabel": "Withdraw",
-        "clearaltlabel": "Withdraw your rating for teaching quality"
+        "clearaltlabel": "Withdraw your rating for Teaching quality"
     }
 }}
-<span class="filter-rating" role="group" aria-label="{{grouplabel}}"
-    data-criterion="{{criterion}}"
-    data-contextid="{{contextid}}"
-    data-courseid="{{courseid}}"
-    data-userrating="{{userrating}}"
-    data-count="{{count}}"
-    data-average="{{average}}"
-    data-canrate="{{#canrate}}1{{/canrate}}{{^canrate}}0{{/canrate}}">
-    <span class="sr-only visually-hidden" data-region="status">{{statustext}}</span>
-    <span class="filter-rating-stars" data-region="stars">
-        {{#stars}}
-            {{#canrate}}
-                <a href="{{url}}" class="filter-rating-star {{#on}}filter-rating-on{{/on}}{{^on}}filter-rating-off{{/on}}"
-                    data-value="{{value}}" aria-label="{{label}}" title="{{label}}">
-                    <i class="fa {{#on}}fa-star{{/on}}{{^on}}fa-star-o{{/on}}" aria-hidden="true"></i>
-                </a>
-            {{/canrate}}
-            {{^canrate}}
-                <span class="filter-rating-star {{#on}}filter-rating-on{{/on}}{{^on}}filter-rating-off{{/on}}"
-                    data-value="{{value}}">
-                    <i class="fa {{#on}}fa-star{{/on}}{{^on}}fa-star-o{{/on}}" aria-hidden="true"></i>
-                </span>
-            {{/canrate}}
-        {{/stars}}
+<div class="starrating-activity" data-cmid="{{cmid}}" data-userrating="{{userrating}}"
+    data-count="{{count}}" data-average="{{average}}">
+    {{#showname}}
+        <span class="starrating-name">{{name}}</span>
+    {{/showname}}
+    <span class="filter-rating" role="group" aria-label="{{grouplabel}}">
+        <span class="sr-only visually-hidden" data-region="status">{{statustext}}</span>
+        <span class="filter-rating-stars" data-region="stars">
+            {{#stars}}
+                {{#canrate}}
+                    <a href="{{url}}" class="filter-rating-star {{#on}}filter-rating-on{{/on}}{{^on}}filter-rating-off{{/on}}"
+                        data-value="{{value}}" aria-label="{{label}}" title="{{label}}">
+                        <i class="fa {{#on}}fa-star{{/on}}{{^on}}fa-star-o{{/on}}" aria-hidden="true"></i>
+                    </a>
+                {{/canrate}}
+                {{^canrate}}
+                    <span class="filter-rating-star {{#on}}filter-rating-on{{/on}}{{^on}}filter-rating-off{{/on}}"
+                        data-value="{{value}}">
+                        <i class="fa {{#on}}fa-star{{/on}}{{^on}}fa-star-o{{/on}}" aria-hidden="true"></i>
+                    </span>
+                {{/canrate}}
+            {{/stars}}
+        </span>
+        {{#showaverage}}
+            <span class="filter-rating-average" data-region="average">{{averagetext}}</span>
+        {{/showaverage}}
+        {{#canclear}}
+            <a href="{{clearurl}}" class="filter-rating-clear" data-region="clear"
+                aria-label="{{clearaltlabel}}">{{clearlabel}}</a>
+        {{/canclear}}
     </span>
-    {{#showaverage}}
-        <span class="filter-rating-average" data-region="average">{{averagetext}}</span>
-    {{/showaverage}}
-    {{#showclear}}
-        <a href="{{clearurl}}" class="filter-rating-clear {{^canclear}}filter-rating-hidden{{/canclear}}"
-            data-region="clear" aria-label="{{clearaltlabel}}">{{clearlabel}}</a>
-    {{/showclear}}
-</span>
+</div>

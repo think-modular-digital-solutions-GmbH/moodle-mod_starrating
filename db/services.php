@@ -15,12 +15,12 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Web services for the star rating filter.
+ * Web services for the star rating activity.
  *
- * Both functions are part of the official Moodle Mobile service so that the
- * Moodle app can save and read ratings without leaving the app.
+ * Both functions are part of the official Moodle Mobile service, which is what
+ * lets the app store a rating without leaving the app.
  *
- * @package    filter_rating
+ * @package    mod_starrating
  * @copyright  2026 Think Modular
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -29,20 +29,20 @@ defined('MOODLE_INTERNAL') || die();
 
 $functions = [
 
-    'filter_rating_set_rating' => [
-        'classname' => 'filter_rating\external\set_rating',
+    'mod_starrating_set_rating' => [
+        'classname' => 'mod_starrating\external\set_rating',
         'methodname' => 'execute',
-        'description' => 'Save the star rating of the current user for a criterion.',
+        'description' => 'Save the star rating of the current user for an activity.',
         'type' => 'write',
         'ajax' => true,
-        'capabilities' => 'filter/rating:rate',
+        'capabilities' => 'mod/starrating:rate',
         'services' => [MOODLE_OFFICIAL_MOBILE_SERVICE],
     ],
 
-    'filter_rating_get_rating' => [
-        'classname' => 'filter_rating\external\get_rating',
+    'mod_starrating_get_rating' => [
+        'classname' => 'mod_starrating\external\get_rating',
         'methodname' => 'execute',
-        'description' => 'Get the star rating of the current user and the average for a criterion.',
+        'description' => 'Get the star rating of the current user and the average for an activity.',
         'type' => 'read',
         'ajax' => true,
         'services' => [MOODLE_OFFICIAL_MOBILE_SERVICE],

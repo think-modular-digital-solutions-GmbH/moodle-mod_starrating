@@ -14,12 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
-namespace filter_rating\event;
+namespace mod_starrating\event;
 
 /**
  * Fired whenever a user submits, changes or withdraws a star rating.
  *
- * @package    filter_rating
+ * @package    mod_starrating
  * @copyright  2026 Think Modular
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -33,6 +33,7 @@ class rating_submitted extends \core\event\base {
     protected function init() {
         $this->data['crud'] = 'u';
         $this->data['edulevel'] = self::LEVEL_PARTICIPATING;
+        $this->data['objecttable'] = 'starrating';
     }
 
     /**
@@ -41,7 +42,7 @@ class rating_submitted extends \core\event\base {
      * @return string
      */
     public static function get_name() {
-        return get_string('eventratingsubmitted', 'filter_rating');
+        return get_string('eventratingsubmitted', 'mod_starrating');
     }
 
     /**
@@ -51,13 +52,14 @@ class rating_submitted extends \core\event\base {
      */
     public function get_description() {
         $rating = $this->other['rating'] ?? 0;
-        $criterion = $this->other['criterion'] ?? '';
 
         if ($rating > 0) {
-            return "The user with id '{$this->userid}' rated the criterion '{$criterion}' with {$rating} stars.";
+            return "The user with id '{$this->userid}' rated the star rating activity with course module id " .
+                "'{$this->contextinstanceid}' with {$rating} stars.";
         }
 
-        return "The user with id '{$this->userid}' withdrew their rating of the criterion '{$criterion}'.";
+        return "The user with id '{$this->userid}' withdrew their rating of the star rating activity with " .
+            "course module id '{$this->contextinstanceid}'.";
     }
 
     /**
@@ -68,9 +70,6 @@ class rating_submitted extends \core\event\base {
     protected function validate_data() {
         parent::validate_data();
 
-        if (!isset($this->other['criterion'])) {
-            throw new \coding_exception('The criterion must be set in other.');
-        }
         if (!isset($this->other['rating'])) {
             throw new \coding_exception('The rating must be set in other.');
         }

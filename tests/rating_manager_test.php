@@ -14,39 +14,39 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
-namespace filter_rating;
+namespace mod_starrating;
 
-use context_course;
-use filter_rating\local\rating_manager;
+use context_module;
+use mod_starrating\local\rating_manager;
 
 /**
  * Tests for the rating manager.
  *
- * @package    filter_rating
+ * @package    mod_starrating
  * @copyright  2026 Think Modular
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @covers     \filter_rating\local\rating_manager
+ * @covers     \mod_starrating\local\rating_manager
  */
 final class rating_manager_test extends \advanced_testcase {
 
     /**
-     * Criteria are trimmed, stripped of markup and capped in length.
+     * Create a course with one star rating activity.
      *
-     * @return void
+     * @return array The course, the instance and its context.
      */
-    public function test_normalise_criterion(): void {
-        $this->assertSame('teaching quality', rating_manager::normalise_criterion('  teaching   quality '));
-        $this->assertSame('teaching quality', rating_manager::normalise_criterion("teaching\tquality"));
-        $this->assertSame('alert(1)', rating_manager::normalise_criterion('<b>alert(1)</b>'));
-        $this->assertSame('', rating_manager::normalise_criterion('   '));
-        $this->assertSame(
-            rating_manager::CRITERION_MAXLENGTH,
-            \core_text::strlen(rating_manager::normalise_criterion(str_repeat('a', 200)))
-        );
+    protected function create_activity(): array {
+        $course = $this->getDataGenerator()->create_course();
+        $instance = $this->getDataGenerator()->create_module('starrating', [
+            'course' => $course->id,
+            'name' => 'Teaching quality',
+        ]);
+        $context = context_module::instance($instance->cmid);
+
+        return [$course, $instance, $context];
     }
 
     /**
-     * A rating is stored once per user, course and criterion.
+     * A rating is stored once per user and activity.
      *
      * @return void
      */
@@ -55,17 +55,16 @@ final class rating_manager_test extends \advanced_testcase {
 
         $this->resetAfterTest();
 
-        $course = $this->getDataGenerator()->create_course();
-        $context = context_course::instance($course->id);
+        [$course, $instance, $context] = $this->create_activity();
         $user = $this->getDataGenerator()->create_and_enrol($course, 'student');
         $this->setUser($user);
 
-        rating_manager::set_rating($context, $course->id, 'teaching quality', 4);
-        $this->assertSame(4, rating_manager::get_user_rating($course->id, 'teaching quality'));
+        rating_manager::set_rating($context, $instance->id, 4);
+        $this->assertSame(4, rating_manager::get_user_rating($instance->id));
 
         // Rating again replaces the earlier value instead of adding a row.
-        rating_manager::set_rating($context, $course->id, 'teaching quality', 2);
-        $this->assertSame(2, rating_manager::get_user_rating($course->id, 'teaching quality'));
+        rating_manager::set_rating($context, $instance->id, 2);
+        $this->assertSame(2, rating_manager::get_user_rating($instance->id));
         $this->assertSame(1, $DB->count_records(rating_manager::TABLE, ['userid' => $user->id]));
     }
 
@@ -79,15 +78,14 @@ final class rating_manager_test extends \advanced_testcase {
 
         $this->resetAfterTest();
 
-        $course = $this->getDataGenerator()->create_course();
-        $context = context_course::instance($course->id);
+        [$course, $instance, $context] = $this->create_activity();
         $user = $this->getDataGenerator()->create_and_enrol($course, 'student');
         $this->setUser($user);
 
-        rating_manager::set_rating($context, $course->id, 'materials', 5);
-        rating_manager::set_rating($context, $course->id, 'materials', 0);
+        rating_manager::set_rating($context, $instance->id, 5);
+        rating_manager::set_rating($context, $instance->id, 0);
 
-        $this->assertSame(0, rating_manager::get_user_rating($course->id, 'materials'));
+        $this->assertSame(0, rating_manager::get_user_rating($instance->id));
         $this->assertSame(0, $DB->count_records(rating_manager::TABLE, ['userid' => $user->id]));
     }
 
@@ -99,131 +97,60 @@ final class rating_manager_test extends \advanced_testcase {
     public function test_set_rating_rejects_out_of_range(): void {
         $this->resetAfterTest();
 
-        $course = $this->getDataGenerator()->create_course();
-        $context = context_course::instance($course->id);
+        [$course, $instance, $context] = $this->create_activity();
         $user = $this->getDataGenerator()->create_and_enrol($course, 'student');
         $this->setUser($user);
 
         $this->expectException(\moodle_exception::class);
-        rating_manager::set_rating($context, $course->id, 'materials', 6);
+        rating_manager::set_rating($context, $instance->id, 6);
     }
 
     /**
-     * The average is calculated over all users of one course and criterion.
+     * The average is calculated over all users of one activity.
      *
      * @return void
      */
     public function test_get_stats(): void {
         $this->resetAfterTest();
 
-        $course = $this->getDataGenerator()->create_course();
-        $othercourse = $this->getDataGenerator()->create_course();
-        $context = context_course::instance($course->id);
-        $othercontext = context_course::instance($othercourse->id);
+        [$course, $instance, $context] = $this->create_activity();
 
-        foreach ([4, 5, 3] as $index => $rating) {
+        $other = $this->getDataGenerator()->create_module('starrating', [
+            'course' => $course->id,
+            'name' => 'Materials',
+        ]);
+        $othercontext = context_module::instance($other->cmid);
+
+        foreach ([4, 5, 3] as $rating) {
             $user = $this->getDataGenerator()->create_and_enrol($course, 'student');
             $this->setUser($user);
-            rating_manager::set_rating($context, $course->id, 'materials', $rating);
+            rating_manager::set_rating($context, $instance->id, $rating);
 
-            // The same criterion in another course must not leak into the average.
-            rating_manager::set_rating($othercontext, $othercourse->id, 'materials', 1);
+            // A second activity in the same course must not leak into the average.
+            rating_manager::set_rating($othercontext, $other->id, 1);
         }
 
-        $stats = rating_manager::get_stats($course->id, 'materials');
+        $stats = rating_manager::get_stats($instance->id);
         $this->assertSame(3, $stats->count);
         $this->assertSame(4.0, $stats->average);
 
-        $emptystats = rating_manager::get_stats($course->id, 'never rated');
-        $this->assertSame(0, $emptystats->count);
-        $this->assertSame(0.0, $emptystats->average);
+        $this->assertSame(3, rating_manager::get_stats($other->id)->count);
+        $this->assertSame(1.0, rating_manager::get_stats($other->id)->average);
     }
 
     /**
-     * Ratings outside a course belong to the site course.
+     * An activity nobody has rated reports nothing.
      *
      * @return void
      */
-    public function test_get_courseid_from_context(): void {
+    public function test_get_stats_without_ratings(): void {
         $this->resetAfterTest();
 
-        $course = $this->getDataGenerator()->create_course();
+        [, $instance] = $this->create_activity();
 
-        $this->assertSame((int) $course->id, rating_manager::get_courseid_from_context(context_course::instance($course->id)));
-        $this->assertSame((int) SITEID, rating_manager::get_courseid_from_context(\context_system::instance()));
-    }
-
-    /**
-     * A criterion is registered once per course, so the app can list it.
-     *
-     * @return void
-     */
-    public function test_record_criterion(): void {
-        global $DB;
-
-        $this->resetAfterTest();
-
-        $course = $this->getDataGenerator()->create_course();
-        $othercourse = $this->getDataGenerator()->create_course();
-
-        rating_manager::record_criterion($course->id, 'teaching quality');
-        rating_manager::record_criterion($course->id, 'teaching quality');
-        rating_manager::record_criterion($course->id, 'materials');
-        rating_manager::record_criterion($othercourse->id, 'teaching quality');
-        rating_manager::record_criterion($course->id, '');
-
-        $this->assertSame(2, $DB->count_records(rating_manager::CRITERION_TABLE, ['courseid' => $course->id]));
-        $this->assertSame(3, $DB->count_records(rating_manager::CRITERION_TABLE));
-    }
-
-    /**
-     * The course criteria carry the figures the app tab shows.
-     *
-     * @return void
-     */
-    public function test_get_course_criteria(): void {
-        $this->resetAfterTest();
-
-        $course = $this->getDataGenerator()->create_course();
-        $context = context_course::instance($course->id);
-        $user = $this->getDataGenerator()->create_and_enrol($course, 'student');
-
-        rating_manager::record_criterion($course->id, 'materials');
-        rating_manager::record_criterion($course->id, 'teaching quality');
-
-        $this->setUser($user);
-        rating_manager::set_rating($context, $course->id, 'materials', 4);
-
-        $criteria = rating_manager::get_course_criteria($course->id);
-        $this->assertCount(2, $criteria);
-
-        // Sorted naturally, so materials comes first.
-        $this->assertSame('materials', $criteria[0]->criterion);
-        $this->assertSame(4, $criteria[0]->userrating);
-        $this->assertSame(1, $criteria[0]->count);
-        $this->assertSame(4.0, $criteria[0]->average);
-
-        $this->assertSame('teaching quality', $criteria[1]->criterion);
-        $this->assertSame(0, $criteria[1]->userrating);
-        $this->assertSame(0, $criteria[1]->count);
-    }
-
-    /**
-     * Only courses that offer a criterion are reported to the app.
-     *
-     * @return void
-     */
-    public function test_get_courses_with_criteria(): void {
-        $this->resetAfterTest();
-
-        $course = $this->getDataGenerator()->create_course();
-        $empty = $this->getDataGenerator()->create_course();
-
-        rating_manager::record_criterion($course->id, 'materials');
-
-        $this->assertSame([(int) $course->id], rating_manager::get_courses_with_criteria());
-        $this->assertSame([(int) $course->id], rating_manager::get_courses_with_criteria([$course->id, $empty->id]));
-        $this->assertSame([], rating_manager::get_courses_with_criteria([$empty->id]));
+        $stats = rating_manager::get_stats($instance->id);
+        $this->assertSame(0, $stats->count);
+        $this->assertSame(0.0, $stats->average);
     }
 
     /**
@@ -234,8 +161,7 @@ final class rating_manager_test extends \advanced_testcase {
     public function test_can_rate(): void {
         $this->resetAfterTest();
 
-        $course = $this->getDataGenerator()->create_course();
-        $context = context_course::instance($course->id);
+        [$course, , $context] = $this->create_activity();
 
         $student = $this->getDataGenerator()->create_and_enrol($course, 'student');
         $this->setUser($student);
@@ -243,5 +169,26 @@ final class rating_manager_test extends \advanced_testcase {
 
         $this->setGuestUser();
         $this->assertFalse(rating_manager::can_rate($context));
+    }
+
+    /**
+     * Deleting the activity removes its ratings.
+     *
+     * @return void
+     */
+    public function test_delete_instance_removes_ratings(): void {
+        global $DB;
+
+        $this->resetAfterTest();
+
+        [$course, $instance, $context] = $this->create_activity();
+        $user = $this->getDataGenerator()->create_and_enrol($course, 'student');
+        $this->setUser($user);
+        rating_manager::set_rating($context, $instance->id, 3);
+
+        $this->setAdminUser();
+        course_delete_module($instance->cmid);
+
+        $this->assertSame(0, $DB->count_records(rating_manager::TABLE, ['starratingid' => $instance->id]));
     }
 }

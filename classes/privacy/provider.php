@@ -14,25 +14,26 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
-namespace filter_rating\privacy;
+namespace mod_starrating\privacy;
 
 use context;
+use context_module;
 use core_privacy\local\metadata\collection;
 use core_privacy\local\request\approved_contextlist;
 use core_privacy\local\request\approved_userlist;
 use core_privacy\local\request\contextlist;
+use core_privacy\local\request\helper;
 use core_privacy\local\request\transform;
 use core_privacy\local\request\userlist;
 use core_privacy\local\request\writer;
-use filter_rating\local\rating_manager;
+use mod_starrating\local\rating_manager;
 
 /**
- * Privacy provider for the star rating filter.
+ * Privacy provider for the star rating activity.
  *
- * The plugin stores one row per user, course and criterion. Nothing is sent
- * anywhere outside this Moodle site.
+ * One row per user and activity. Nothing is sent anywhere outside this site.
  *
- * @package    filter_rating
+ * @package    mod_starrating
  * @copyright  2026 Think Modular
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -49,20 +50,18 @@ class provider implements
      */
     public static function get_metadata(collection $collection): collection {
         $collection->add_database_table(rating_manager::TABLE, [
-            'userid' => 'privacy:metadata:filter_rating:userid',
-            'courseid' => 'privacy:metadata:filter_rating:courseid',
-            'contextid' => 'privacy:metadata:filter_rating:contextid',
-            'criterion' => 'privacy:metadata:filter_rating:criterion',
-            'rating' => 'privacy:metadata:filter_rating:rating',
-            'timecreated' => 'privacy:metadata:filter_rating:timecreated',
-            'timemodified' => 'privacy:metadata:filter_rating:timemodified',
-        ], 'privacy:metadata:filter_rating');
+            'starratingid' => 'privacy:metadata:starrating_rating:starratingid',
+            'userid' => 'privacy:metadata:starrating_rating:userid',
+            'rating' => 'privacy:metadata:starrating_rating:rating',
+            'timecreated' => 'privacy:metadata:starrating_rating:timecreated',
+            'timemodified' => 'privacy:metadata:starrating_rating:timemodified',
+        ], 'privacy:metadata:starrating_rating');
 
         return $collection;
     }
 
     /**
-     * Contexts a user has left ratings in.
+     * Activity contexts the user has rated in.
      *
      * @param int $userid User to look up.
      * @return contextlist
@@ -70,26 +69,43 @@ class provider implements
     public static function get_contexts_for_userid(int $userid): contextlist {
         $contextlist = new contextlist();
 
-        $contextlist->add_from_sql(
-            'SELECT DISTINCT contextid FROM {' . rating_manager::TABLE . '} WHERE userid = :userid',
-            ['userid' => $userid]
-        );
+        $sql = 'SELECT ctx.id
+                  FROM {' . rating_manager::TABLE . '} r
+                  JOIN {starrating} s ON s.id = r.starratingid
+                  JOIN {modules} m ON m.name = :modname
+                  JOIN {course_modules} cm ON cm.instance = s.id AND cm.module = m.id
+                  JOIN {context} ctx ON ctx.instanceid = cm.id AND ctx.contextlevel = :contextlevel
+                 WHERE r.userid = :userid';
+
+        $contextlist->add_from_sql($sql, [
+            'modname' => 'starrating',
+            'contextlevel' => CONTEXT_MODULE,
+            'userid' => $userid,
+        ]);
 
         return $contextlist;
     }
 
     /**
-     * Users who have left ratings in a context.
+     * Users who have rated in an activity.
      *
      * @param userlist $userlist List to add to.
      * @return void
      */
     public static function get_users_in_context(userlist $userlist): void {
-        $userlist->add_from_sql(
-            'userid',
-            'SELECT userid FROM {' . rating_manager::TABLE . '} WHERE contextid = :contextid',
-            ['contextid' => $userlist->get_context()->id]
-        );
+        $context = $userlist->get_context();
+        if (!$context instanceof context_module) {
+            return;
+        }
+
+        $sql = 'SELECT r.userid
+                  FROM {' . rating_manager::TABLE . '} r
+                  JOIN {starrating} s ON s.id = r.starratingid
+                  JOIN {modules} m ON m.name = :modname
+                  JOIN {course_modules} cm ON cm.instance = s.id AND cm.module = m.id
+                 WHERE cm.id = :cmid';
+
+        $userlist->add_from_sql('userid', $sql, ['modname' => 'starrating', 'cmid' => $context->instanceid]);
     }
 
     /**
@@ -104,34 +120,36 @@ class provider implements
         $userid = $contextlist->get_user()->id;
 
         foreach ($contextlist->get_contexts() as $context) {
-            $records = $DB->get_records(rating_manager::TABLE, [
-                'contextid' => $context->id,
-                'userid' => $userid,
-            ], 'criterion ASC');
-
-            if (empty($records)) {
+            if (!$context instanceof context_module) {
                 continue;
             }
 
-            $ratings = [];
-            foreach ($records as $record) {
-                $ratings[] = (object) [
-                    'criterion' => $record->criterion,
-                    'rating' => $record->rating,
-                    'timecreated' => transform::datetime($record->timecreated),
-                    'timemodified' => transform::datetime($record->timemodified),
-                ];
+            $instanceid = self::get_instanceid($context);
+            if (!$instanceid) {
+                continue;
             }
 
-            writer::with_context($context)->export_data(
-                [get_string('privacy:path', 'filter_rating')],
-                (object) ['ratings' => $ratings]
-            );
+            $record = $DB->get_record(rating_manager::TABLE, [
+                'starratingid' => $instanceid,
+                'userid' => $userid,
+            ]);
+
+            if (!$record) {
+                continue;
+            }
+
+            $data = helper::get_context_data($context, $contextlist->get_user());
+            $data->rating = $record->rating;
+            $data->timecreated = transform::datetime($record->timecreated);
+            $data->timemodified = transform::datetime($record->timemodified);
+
+            writer::with_context($context)->export_data([], $data);
+            helper::export_context_files($context, $contextlist->get_user());
         }
     }
 
     /**
-     * Delete every rating stored in a context.
+     * Delete every rating stored in an activity.
      *
      * @param context $context Context to purge.
      * @return void
@@ -139,11 +157,17 @@ class provider implements
     public static function delete_data_for_all_users_in_context(context $context): void {
         global $DB;
 
-        $DB->delete_records(rating_manager::TABLE, ['contextid' => $context->id]);
+        if (!$context instanceof context_module) {
+            return;
+        }
+
+        if ($instanceid = self::get_instanceid($context)) {
+            $DB->delete_records(rating_manager::TABLE, ['starratingid' => $instanceid]);
+        }
     }
 
     /**
-     * Delete the ratings of one user in the approved contexts.
+     * Delete the ratings of one user in the approved activities.
      *
      * @param approved_contextlist $contextlist Approved contexts.
      * @return void
@@ -151,19 +175,21 @@ class provider implements
     public static function delete_data_for_user(approved_contextlist $contextlist): void {
         global $DB;
 
-        $contextids = $contextlist->get_contextids();
-        if (empty($contextids)) {
-            return;
+        $userid = $contextlist->get_user()->id;
+
+        foreach ($contextlist->get_contexts() as $context) {
+            if (!$context instanceof context_module) {
+                continue;
+            }
+
+            if ($instanceid = self::get_instanceid($context)) {
+                $DB->delete_records(rating_manager::TABLE, ['starratingid' => $instanceid, 'userid' => $userid]);
+            }
         }
-
-        [$insql, $params] = $DB->get_in_or_equal($contextids, SQL_PARAMS_NAMED, 'ctx');
-        $params['userid'] = $contextlist->get_user()->id;
-
-        $DB->delete_records_select(rating_manager::TABLE, "userid = :userid AND contextid {$insql}", $params);
     }
 
     /**
-     * Delete the ratings of the approved users in one context.
+     * Delete the ratings of the approved users in one activity.
      *
      * @param approved_userlist $userlist Approved users.
      * @return void
@@ -171,14 +197,32 @@ class provider implements
     public static function delete_data_for_users(approved_userlist $userlist): void {
         global $DB;
 
+        $context = $userlist->get_context();
+        if (!$context instanceof context_module) {
+            return;
+        }
+
+        $instanceid = self::get_instanceid($context);
         $userids = $userlist->get_userids();
-        if (empty($userids)) {
+        if (!$instanceid || empty($userids)) {
             return;
         }
 
         [$insql, $params] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED, 'usr');
-        $params['contextid'] = $userlist->get_context()->id;
+        $params['starratingid'] = $instanceid;
 
-        $DB->delete_records_select(rating_manager::TABLE, "contextid = :contextid AND userid {$insql}", $params);
+        $DB->delete_records_select(rating_manager::TABLE, "starratingid = :starratingid AND userid {$insql}", $params);
+    }
+
+    /**
+     * The activity instance behind a module context.
+     *
+     * @param context_module $context The module context.
+     * @return int Instance id, 0 when the context is not a star rating.
+     */
+    protected static function get_instanceid(context_module $context): int {
+        $cm = get_coursemodule_from_id('starrating', $context->instanceid, 0, false, IGNORE_MISSING);
+
+        return $cm ? (int) $cm->instance : 0;
     }
 }

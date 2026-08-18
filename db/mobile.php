@@ -15,18 +15,18 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Moodle app support for the star rating filter.
+ * Moodle app support for the star rating activity.
  *
- * The app has no site plugin delegate for text filters, so the stars inside
- * formatted text cannot be made interactive there. What the app does support is
- * a course tab, and inside a tab a rating can be submitted without a line of
- * JavaScript: the template uses the app's core-site-plugins-call-ws directive,
- * which calls filter_rating_set_rating on tap and refreshes the tab.
+ * Being an activity is what makes the app work here. The app registers a
+ * content link handler for every site plugin module, so a link to
+ * /mod/starrating/view.php opens the activity natively in the app instead of a
+ * browser, and the activity page is a site plugin template, where a rating can
+ * be submitted declaratively through core-site-plugins-call-ws.
  *
- * The init method restricts the tab to the courses that actually offer a
- * criterion, so it does not appear everywhere.
+ * coursepagemethod renders the stars inline on the course page, the way they
+ * appear on the web.
  *
- * @package    filter_rating
+ * @package    mod_starrating
  * @copyright  2026 Think Modular
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -36,28 +36,28 @@ defined('MOODLE_INTERNAL') || die();
 global $CFG;
 
 $addons = [
-    'filter_rating' => [
+    'mod_starrating' => [
         'handlers' => [
-            'courseratings' => [
-                'delegate' => 'CoreCourseOptionsDelegate',
-                'method' => 'mobile_course_ratings',
-                'init' => 'mobile_init',
+            'starrating' => [
+                'delegate' => 'CoreCourseModuleDelegate',
+                'method' => 'mobile_view_activity',
+                'coursepagemethod' => 'mobile_course_page',
                 'displaydata' => [
-                    'title' => 'pluginname',
-                    'class' => 'filter-rating-course-option',
-                    'icon' => 'fas-star',
+                    'icon' => $CFG->wwwroot . '/mod/starrating/pix/monologo.svg',
+                    'class' => '',
                 ],
                 'styles' => [
-                    'url' => $CFG->wwwroot . '/filter/rating/styles.css',
-                    'version' => (int) get_config('filter_rating', 'version'),
+                    'url' => $CFG->wwwroot . '/mod/starrating/styles.css',
+                    'version' => (int) get_config('mod_starrating', 'version'),
                 ],
                 'ptrenabled' => true,
             ],
         ],
         'lang' => [
-            ['pluginname', 'filter_rating'],
-            ['nocriteriaincourse', 'filter_rating'],
-            ['ratingsaved', 'filter_rating'],
+            ['pluginname', 'mod_starrating'],
+            ['modulename', 'mod_starrating'],
+            ['ratingsaved', 'mod_starrating'],
+            ['ratingcleared', 'mod_starrating'],
         ],
     ],
 ];

@@ -14,10 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
-namespace filter_rating\output;
+namespace mod_starrating\output;
 
-use filter_rating\local\rating_manager;
-use filter_rating\local\report;
+use mod_starrating\local\rating_manager;
+use mod_starrating\local\report;
 use html_table;
 use html_writer;
 use moodle_url;
@@ -25,9 +25,9 @@ use plugin_renderer_base;
 use stdClass;
 
 /**
- * Renderer for the star rating filter.
+ * Renderer for the star rating activity.
  *
- * @package    filter_rating
+ * @package    mod_starrating
  * @copyright  2026 Think Modular
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -40,7 +40,7 @@ class renderer extends plugin_renderer_base {
      * @return string HTML.
      */
     public function render_rating_widget(rating_widget $widget): string {
-        return $this->render_from_template('filter_rating/rating', $widget->export_for_template($this));
+        return $this->render_from_template('mod_starrating/rating', $widget->export_for_template($this));
     }
 
     /**
@@ -52,7 +52,7 @@ class renderer extends plugin_renderer_base {
      */
     public function static_stars(float $average, int $count): string {
         if ($count === 0) {
-            return get_string('noratingsyet', 'filter_rating');
+            return get_string('noratingsyet', 'mod_starrating');
         }
 
         $stars = [];
@@ -60,9 +60,9 @@ class renderer extends plugin_renderer_base {
             $stars[] = ['on' => $value <= (int) round($average)];
         }
 
-        return $this->render_from_template('filter_rating/staticstars', [
+        return $this->render_from_template('mod_starrating/staticstars', [
             'stars' => $stars,
-            'label' => get_string('averagetext', 'filter_rating', (object) [
+            'label' => get_string('averagetext', 'mod_starrating', (object) [
                 'average' => format_float($average, 1),
                 'max' => rating_manager::MAX_STARS,
                 'count' => $count,
@@ -84,26 +84,26 @@ class renderer extends plugin_renderer_base {
     public function report_filter(moodle_url $actionurl, array $courseoptions, array $criterionoptions,
             int $courseid, string $criterion, string $groupby): string {
 
-        $controls = $this->filter_control('courseid', get_string('filtercourse', 'filter_rating'),
+        $controls = $this->filter_control('courseid', get_string('filtercourse', 'mod_starrating'),
             $courseoptions, $courseid);
-        $controls .= $this->filter_control('criterion', get_string('filtercriterion', 'filter_rating'),
+        $controls .= $this->filter_control('activity', get_string('filteractivity', 'mod_starrating'),
             $criterionoptions, $criterion);
-        $controls .= $this->filter_control('groupby', get_string('filtergroupby', 'filter_rating'),
+        $controls .= $this->filter_control('groupby', get_string('filtergroupby', 'mod_starrating'),
             report::get_group_options(), $groupby);
 
         $controls .= html_writer::div(html_writer::empty_tag('input', [
             'type' => 'submit',
             'class' => 'btn btn-primary',
-            'value' => get_string('applyfilter', 'filter_rating'),
+            'value' => get_string('applyfilter', 'mod_starrating'),
         ]), 'form-group mb-2');
 
-        $fieldset = html_writer::tag('legend', get_string('filterheading', 'filter_rating'), ['class' => 'h5']);
+        $fieldset = html_writer::tag('legend', get_string('filterheading', 'mod_starrating'), ['class' => 'h5']);
         $fieldset .= html_writer::div($controls, 'd-flex flex-wrap align-items-end');
 
         return html_writer::tag('form', html_writer::tag('fieldset', $fieldset), [
             'method' => 'get',
             'action' => $actionurl->out_omit_querystring(),
-            'class' => 'filter-rating-report-filter mb-4',
+            'class' => 'starrating-report-filter mb-4',
         ]);
     }
 
@@ -117,7 +117,7 @@ class renderer extends plugin_renderer_base {
      * @return string HTML.
      */
     protected function filter_control(string $name, string $label, array $options, $selected): string {
-        $id = 'filter_rating_' . $name;
+        $id = 'starrating_' . $name;
 
         $control = html_writer::label($label, $id, true, ['class' => 'd-block']);
         $control .= html_writer::select($options, $name, $selected, false, [
@@ -138,24 +138,24 @@ class renderer extends plugin_renderer_base {
      */
     public function summary_table(array $rows, string $groupby, stdClass $overall): string {
         if (empty($rows)) {
-            return $this->notification(get_string('noresults', 'filter_rating'), 'info');
+            return $this->notification(get_string('noresults', 'mod_starrating'), 'info');
         }
 
         $showcourse = $groupby !== report::GROUP_CRITERION;
         $showcriterion = $groupby !== report::GROUP_COURSE;
 
         $table = new html_table();
-        $table->caption = get_string('averagescaption', 'filter_rating');
+        $table->caption = get_string('averagescaption', 'mod_starrating');
         $table->attributes['class'] = 'generaltable';
         $table->head = [];
         if ($showcourse) {
-            $table->head[] = get_string('colcourse', 'filter_rating');
+            $table->head[] = get_string('colcourse', 'mod_starrating');
         }
         if ($showcriterion) {
-            $table->head[] = get_string('colcriterion', 'filter_rating');
+            $table->head[] = get_string('colcriterion', 'mod_starrating');
         }
-        $table->head[] = get_string('colratings', 'filter_rating');
-        $table->head[] = get_string('colaverage', 'filter_rating');
+        $table->head[] = get_string('colratings', 'mod_starrating');
+        $table->head[] = get_string('colaverage', 'mod_starrating');
 
         foreach ($rows as $row) {
             $cells = [];
@@ -175,7 +175,7 @@ class renderer extends plugin_renderer_base {
 
         $overallrow = new \html_table_row();
         $overallrow->attributes['class'] = 'font-weight-bold fw-bold';
-        $label = new \html_table_cell(get_string('overallaverage', 'filter_rating'));
+        $label = new \html_table_cell(get_string('overallaverage', 'mod_starrating'));
         $label->colspan = (int) $showcourse + (int) $showcriterion;
         $label->header = true;
         $overallrow->cells = [

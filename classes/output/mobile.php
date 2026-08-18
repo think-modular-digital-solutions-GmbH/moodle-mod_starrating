@@ -14,100 +14,72 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
-namespace filter_rating\output;
+namespace mod_starrating\output;
 
-use context_course;
-use filter_rating\local\rating_manager;
-use stdClass;
+use context_module;
+use mod_starrating\local\rating_manager;
+use moodle_url;
 
 /**
- * Moodle app entry points for the star rating filter.
+ * Moodle app entry points for the star rating activity.
  *
- * @package    filter_rating
+ * @package    mod_starrating
  * @copyright  2026 Think Modular
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class mobile {
 
     /**
-     * Decide in which courses the app shows the ratings tab.
+     * The activity page in the app, where the rating is actually given.
      *
-     * Called once when the app loads the site plugins, so the tab does not
-     * appear in courses that offer nothing to rate.
+     * This is a site plugin template, so the stars can carry the app's
+     * core-site-plugins-call-ws directive and submit without any JavaScript of
+     * ours and without leaving the app.
      *
-     * @param array $args Arguments passed by the app, unused.
+     * @param array $args Arguments passed by the app, expects cmid.
      * @return array Content for the app.
      */
-    public static function mobile_init(array $args): array {
-        global $USER;
+    public static function mobile_view_activity(array $args): array {
+        global $OUTPUT, $DB;
 
-        $usercourses = array_keys(enrol_get_users_courses($USER->id, true, 'id'));
-        $courses = $usercourses ? rating_manager::get_courses_with_criteria($usercourses) : [];
+        [$course, $cm] = get_course_and_cm_from_cmid((int) ($args['cmid'] ?? 0), 'starrating');
+        require_login($course, false, $cm);
 
-        return [
-            'templates' => [],
-            'javascript' => '',
-            'restrict' => ['courses' => $courses],
-        ];
-    }
+        $context = context_module::instance($cm->id);
+        $instance = $DB->get_record('starrating', ['id' => $cm->instance], '*', MUST_EXIST);
+        $name = format_string($cm->name, true, ['context' => $context]);
 
-    /**
-     * The ratings tab of one course.
-     *
-     * Every star is an element carrying core-site-plugins-call-ws, so the app
-     * submits the rating itself and reloads this tab afterwards. No JavaScript
-     * is shipped to the app.
-     *
-     * @param array $args Arguments passed by the app, expects courseid.
-     * @return array Content for the app.
-     */
-    public static function mobile_course_ratings(array $args): array {
-        global $OUTPUT;
-
-        $courseid = (int) ($args['courseid'] ?? 0);
-        $course = get_course($courseid);
-        require_login($course, false);
-
-        $context = context_course::instance($courseid);
+        $userrating = rating_manager::get_user_rating((int) $cm->instance);
+        $stats = rating_manager::get_stats((int) $cm->instance);
         $canrate = rating_manager::can_rate($context);
-        $items = [];
 
-        foreach (rating_manager::get_course_criteria($courseid) as $entry) {
-            $stats = new stdClass();
-            $stats->count = $entry->count;
-            $stats->average = $entry->average;
-
-            $stars = [];
-            for ($value = 1; $value <= rating_manager::MAX_STARS; $value++) {
-                $stars[] = [
-                    'on' => $value <= $entry->userrating,
-                    'params' => self::build_params($context->id, $entry->criterion, $value),
-                    'label' => get_string('ratestars', 'filter_rating', (object) [
-                        'stars' => $value,
-                        'max' => rating_manager::MAX_STARS,
-                        'criterion' => $entry->criterion,
-                    ]),
-                ];
-            }
-
-            $items[] = [
-                'criterion' => $entry->criterion,
-                'statustext' => rating_manager::get_status_text($entry->criterion, $entry->userrating),
-                'averagetext' => rating_manager::get_average_text($stats),
-                'stars' => $stars,
-                'canclear' => $canrate && $entry->userrating > 0,
-                'clearparams' => self::build_params($context->id, $entry->criterion, 0),
-                'clearlabel' => get_string('clearratingaria', 'filter_rating', $entry->criterion),
+        $stars = [];
+        for ($value = 1; $value <= rating_manager::MAX_STARS; $value++) {
+            $stars[] = [
+                'on' => $value <= $userrating,
+                'params' => self::build_params((int) $cm->id, $value),
+                'label' => get_string('ratestars', 'mod_starrating', (object) [
+                    'stars' => $value,
+                    'max' => rating_manager::MAX_STARS,
+                    'criterion' => $name,
+                ]),
             ];
         }
 
-        $html = $OUTPUT->render_from_template('filter_rating/mobile_course_ratings', [
-            'items' => $items,
-            'hasitems' => !empty($items),
+        $html = $OUTPUT->render_from_template('mod_starrating/mobile_view_activity', [
+            'name' => $name,
+            'intro' => format_module_intro('starrating', $instance, $cm->id),
+            'hasintro' => (bool) trim(strip_tags($instance->intro ?? '')),
+            'stars' => $stars,
             'canrate' => $canrate,
-            'emptytext' => get_string('nocriteriaincourse', 'filter_rating'),
-            'cleartext' => get_string('clearrating', 'filter_rating'),
-            'successmessage' => get_string('ratingsaved', 'filter_rating'),
+            'statustext' => rating_manager::get_status_text($name, $userrating),
+            'showaverage' => !empty($instance->showaverage),
+            'averagetext' => rating_manager::get_average_text($stats),
+            'canclear' => $canrate && !empty($instance->allowclear) && $userrating > 0,
+            'clearparams' => self::build_params((int) $cm->id, 0),
+            'cleartext' => get_string('clearrating', 'mod_starrating'),
+            'clearlabel' => get_string('clearratingaria', 'mod_starrating', $name),
+            'successmessage' => get_string('ratingsaved', 'mod_starrating'),
         ]);
 
         return [
@@ -118,20 +90,64 @@ class mobile {
     }
 
     /**
-     * The parameter object the app passes to filter_rating_set_rating.
+     * The stars as they appear inline on the course page in the app.
      *
-     * The app reads this as an Angular expression, so the criterion is quoted
-     * and escaped for a single quoted string. The template escapes the result
-     * again for the HTML attribute.
+     * The app renders this through core-format-text, which cannot run the
+     * call-ws directive, so the stars here link to the activity. The app
+     * recognises that link and opens the activity natively, where the rating is
+     * one tap away.
      *
-     * @param int $contextid Course context the rating is submitted in.
-     * @param string $criterion Normalised criterion.
+     * @param array $args Arguments passed by the app, expects cmid.
+     * @return array Content for the app.
+     */
+    public static function mobile_course_page(array $args): array {
+        global $OUTPUT;
+
+        [$course, $cm] = get_course_and_cm_from_cmid((int) ($args['cmid'] ?? 0), 'starrating');
+        require_login($course, false, $cm);
+
+        $context = context_module::instance($cm->id);
+        $name = format_string($cm->name, true, ['context' => $context]);
+
+        $userrating = rating_manager::get_user_rating((int) $cm->instance);
+        $stats = rating_manager::get_stats((int) $cm->instance);
+        $customdata = (array) $cm->customdata;
+        $url = (new moodle_url('/mod/starrating/view.php', ['id' => $cm->id]))->out(false);
+
+        $stars = [];
+        for ($value = 1; $value <= rating_manager::MAX_STARS; $value++) {
+            $stars[] = ['on' => $value <= $userrating];
+        }
+
+        $html = $OUTPUT->render_from_template('mod_starrating/mobile_course_page', [
+            'name' => $name,
+            'stars' => $stars,
+            'url' => $url,
+            'canrate' => rating_manager::can_rate($context),
+            'statustext' => rating_manager::get_status_text($name, $userrating),
+            'showaverage' => !empty($customdata['showaverage']),
+            'averagetext' => rating_manager::get_average_text($stats),
+            'ratelabel' => get_string('rateinapp', 'mod_starrating', $name),
+        ]);
+
+        return [
+            'templates' => [['id' => 'main', 'html' => $html]],
+            'javascript' => '',
+            'otherdata' => '',
+        ];
+    }
+
+    /**
+     * The parameter object the app passes to mod_starrating_set_rating.
+     *
+     * The app reads this as an Angular expression, and the template escapes the
+     * result again for the HTML attribute.
+     *
+     * @param int $cmid Course module id.
      * @param int $rating Number of stars, 0 to withdraw.
      * @return string
      */
-    protected static function build_params(int $contextid, string $criterion, int $rating): string {
-        $escaped = str_replace(['\\', "'"], ['\\\\', "\\'"], $criterion);
-
-        return sprintf("{contextid: %d, criterion: '%s', rating: %d}", $contextid, $escaped, $rating);
+    protected static function build_params(int $cmid, int $rating): string {
+        return sprintf('{cmid: %d, rating: %d}', $cmid, $rating);
     }
 }

@@ -1,0 +1,116 @@
+{{!
+    This file is part of Moodle - https://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_starrating/mobile_view_activity
+
+    The star rating activity as the Moodle app shows it.
+
+    Rendered on the server and compiled by the app as one of its own templates,
+    which is why the stars can carry core-site-plugins-call-ws: tapping one
+    calls mod_starrating_set_rating and refreshes the page. No JavaScript is
+    shipped to the app.
+
+    The params attribute is an Angular expression built in PHP, which is why it
+    is a bound [params] attribute.
+
+    Context variables required for this template:
+    * name string Name of the activity, which is the criterion
+    * hasintro bool Whether a description was entered
+    * intro string The description
+    * canrate bool Whether the user may rate
+    * stars array List of on, params and label
+    * statustext string The current user rating in words
+    * showaverage bool Whether to show the average
+    * averagetext string The average in words
+    * canclear bool Whether the withdraw button is shown
+    * clearparams string Params for the withdraw call
+    * cleartext string Visible text of the withdraw button
+    * clearlabel string Accessible name of the withdraw button
+    * successmessage string Confirmation the app shows after a rating
+
+    Example context (json):
+    {
+        "name": "Teaching quality",
+        "hasintro": true,
+        "intro": "<p>How well was this taught?</p>",
+        "canrate": true,
+        "stars": [
+            {"on": true, "params": "{cmid: 12, rating: 1}", "label": "Rate Teaching quality with 1 of 5 stars"},
+            {"on": true, "params": "{cmid: 12, rating: 2}", "label": "Rate Teaching quality with 2 of 5 stars"},
+            {"on": true, "params": "{cmid: 12, rating: 3}", "label": "Rate Teaching quality with 3 of 5 stars"},
+            {"on": false, "params": "{cmid: 12, rating: 4}", "label": "Rate Teaching quality with 4 of 5 stars"},
+            {"on": false, "params": "{cmid: 12, rating: 5}", "label": "Rate Teaching quality with 5 of 5 stars"}
+        ],
+        "statustext": "Your rating for Teaching quality: 3 of 5 stars",
+        "showaverage": true,
+        "averagetext": "Average 3.8 of 5 from 12 ratings",
+        "canclear": true,
+        "clearparams": "{cmid: 12, rating: 0}",
+        "cleartext": "Withdraw",
+        "clearlabel": "Withdraw your rating for Teaching quality",
+        "successmessage": "Your rating was saved."
+    }
+}}
+<div class="starrating-app">
+    {{#hasintro}}
+        <ion-item class="ion-text-wrap">
+            <ion-label>
+                <core-format-text text="{{intro}}"></core-format-text>
+            </ion-label>
+        </ion-item>
+    {{/hasintro}}
+    <ion-item class="ion-text-wrap" lines="none">
+        <ion-label>
+            <p>{{statustext}}</p>
+            {{#showaverage}}<p>{{averagetext}}</p>{{/showaverage}}
+        </ion-label>
+    </ion-item>
+    <ion-item class="ion-text-wrap" lines="none">
+        <div class="filter-rating filter-rating-app" role="group" aria-label="{{name}}">
+            {{#canrate}}
+                {{#stars}}
+                    <a core-site-plugins-call-ws name="mod_starrating_set_rating"
+                        [params]="{{params}}"
+                        [preSets]="{getFromCache: 0, saveToCache: 0}"
+                        refreshOnSuccess="true"
+                        successMessage="{{successmessage}}"
+                        class="filter-rating-star {{#on}}filter-rating-on{{/on}}{{^on}}filter-rating-off{{/on}}"
+                        aria-label="{{label}}">
+                        <ion-icon name="{{#on}}fas-star{{/on}}{{^on}}far-star{{/on}}" aria-hidden="true"></ion-icon>
+                    </a>
+                {{/stars}}
+            {{/canrate}}
+            {{^canrate}}
+                {{#stars}}
+                    <span class="filter-rating-star {{#on}}filter-rating-on{{/on}}{{^on}}filter-rating-off{{/on}}">
+                        <ion-icon name="{{#on}}fas-star{{/on}}{{^on}}far-star{{/on}}" aria-hidden="true"></ion-icon>
+                    </span>
+                {{/stars}}
+            {{/canrate}}
+        </div>
+    </ion-item>
+    {{#canclear}}
+        <ion-item lines="none">
+            <ion-button slot="end" fill="clear" size="small"
+                core-site-plugins-call-ws name="mod_starrating_set_rating"
+                [params]="{{clearparams}}"
+                [preSets]="{getFromCache: 0, saveToCache: 0}"
+                refreshOnSuccess="true"
+                aria-label="{{clearlabel}}">{{cleartext}}</ion-button>
+        </ion-item>
+    {{/canclear}}
+</div>

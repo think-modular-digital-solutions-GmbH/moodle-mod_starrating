@@ -15,9 +15,9 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Capabilities for the star rating filter.
+ * Capabilities for the star rating activity.
  *
- * @package    filter_rating
+ * @package    mod_starrating
  * @copyright  2026 Think Modular
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -26,10 +26,22 @@ defined('MOODLE_INTERNAL') || die();
 
 $capabilities = [
 
-    // Submit or change your own star rating.
-    'filter/rating:rate' => [
+    // Add a star rating to a course.
+    'mod/starrating:addinstance' => [
+        'riskbitmask' => RISK_XSS,
         'captype' => 'write',
         'contextlevel' => CONTEXT_COURSE,
+        'archetypes' => [
+            'editingteacher' => CAP_ALLOW,
+            'manager' => CAP_ALLOW,
+        ],
+        'clonepermissionsfrom' => 'moodle/course:manageactivities',
+    ],
+
+    // Submit or change your own star rating.
+    'mod/starrating:rate' => [
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_MODULE,
         'archetypes' => [
             'student' => CAP_ALLOW,
             'teacher' => CAP_ALLOW,
@@ -39,7 +51,7 @@ $capabilities = [
     ],
 
     // View the site wide rating report, which shows who rated what.
-    'filter/rating:viewreports' => [
+    'mod/starrating:viewreports' => [
         'riskbitmask' => RISK_PERSONAL,
         'captype' => 'read',
         'contextlevel' => CONTEXT_SYSTEM,

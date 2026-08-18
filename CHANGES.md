@@ -7,48 +7,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Fixed
+### Changed
 
-- Rating in the Moodle app opened a browser and asked for another login, which
-  Moodle's six minute auto login lockout makes unavoidable for a link. Ratings
-  are now given on a Ratings tab inside the app, without leaving it. The stars
-  inside text remain a display only in the app.
-- All five stars looked filled whether or not the criterion had been rated.
-  Rated stars are now filled and gold, unrated ones are outlines, in the
-  browser and in the app alike.
+- **The plugin is now an activity, not a text filter.** Star ratings are added
+  through *Add an activity or resource → Star rating*, and the name of the
+  activity is what is being rated. The `{{ rating:criterion }}` token is gone.
+  This is what finally makes rating work in the Moodle app: the app opens an
+  activity natively, which it could never do for a link inside filtered text.
+- The stars appear directly on the course page, the way a label shows its text,
+  so rating is still a single click without opening anything.
 
 ### Added
 
-- Ratings tab in the Moodle app, listing the criteria of a course with tappable
-  stars. It calls the rating web service declaratively, so the plugin ships no
-  JavaScript to the app.
-- Star rating filter: the token `{{ rating:criterion }}` is replaced by a five
-  star FontAwesome rating anywhere text is filtered in Moodle.
+- Star rating activity with five stars on the course page, one rating per
+  person, changeable and withdrawable.
+- Moodle app support with no JavaScript: the stars on the course page link into
+  the activity, which the app opens natively, and there the stars submit through
+  the app's own `core-site-plugins-call-ws` directive.
 - Rating endpoint that stores the rating and returns to the page it was given
   on.
-- Web services `filter_rating_set_rating` and `filter_rating_get_rating`, both
+- Web services `mod_starrating_set_rating` and `mod_starrating_get_rating`, both
   part of the official mobile service and available over AJAX.
 - Site report under *Site administration → Reports → Star ratings*: averages
-  grouped by course, by criterion or by both, filterable by course and
-  criterion, plus a sortable, paged and downloadable list of the individual
-  ratings.
-- Record of the criteria each course offers, so they can be listed where no
-  filter token is rendered.
-- Settings for showing the average next to the stars and for allowing users to
-  withdraw their rating.
-- Capabilities `filter/rating:rate` and `filter/rating:viewreports`.
-- Event `\filter_rating\event\rating_submitted` for every submitted, changed or
-  withdrawn rating.
-- Privacy API provider covering export and all three deletion paths.
+  grouped by course, by activity or by both, filterable by course and activity,
+  plus a sortable, paged and downloadable list of the individual ratings.
+- Per activity settings for showing the average and for allowing withdrawal,
+  with site wide defaults.
+- Overview page listing every star rating of a course with its average.
+- Backup and restore, course reset support, and a Privacy API provider covering
+  export and all three deletion paths.
+- Capabilities `mod/starrating:addinstance`, `mod/starrating:rate` and
+  `mod/starrating:viewreports`.
 - German translation.
-- Unit tests for the rating manager, the token replacement and the privacy
-  provider.
+
+### Removed
+
+- The `filter_rating` text filter, its token parsing and the criterion registry
+  it needed. The filter is not upgraded to the activity; it has to be
+  uninstalled, and its ratings do not carry over.
 
 ### Security
 
-- Rating links are signed with an HMAC bound to user, context, criterion and
-  number of stars, so no session key is ever rendered into filtered text. A
-  missing or stale signature falls back to a confirmation protected by the
-  session key.
-- Return URLs are restricted to local URLs, so the endpoint cannot be used as
-  an open redirect.
+- Rating links are signed with an HMAC bound to user, course module and number
+  of stars, so no session key is rendered into the course page. A missing or
+  stale signature falls back to a confirmation protected by the session key.
+- Return URLs are restricted to local URLs, so the endpoint cannot be used as an
+  open redirect.

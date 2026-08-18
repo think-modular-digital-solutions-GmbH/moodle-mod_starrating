@@ -15,12 +15,9 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Star rating filter for Moodle 4.4 and earlier.
+ * Test data generator for the star rating activity.
  *
- * Moodle 4.5 introduced classes/text_filter.php and loads this file only when
- * that class does not exist, so both can live side by side.
- *
- * @package    filter_rating
+ * @package    mod_starrating
  * @copyright  2026 Think Modular
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -28,22 +25,38 @@
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * Legacy star rating filter.
+ * Creates star rating activities for tests.
  *
- * @package    filter_rating
+ * @package    mod_starrating
  * @copyright  2026 Think Modular
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class filter_rating extends moodle_text_filter {
+class mod_starrating_generator extends testing_module_generator {
 
     /**
-     * Replace every rating token with a star rating widget.
+     * Create an activity instance with sensible defaults.
      *
-     * @param string $text Text being filtered.
-     * @param array $options Filter options, unused.
-     * @return string Filtered text.
+     * @param array|stdClass|null $record Instance data.
+     * @param array|null $options Generator options.
+     * @return stdClass The created instance.
      */
-    public function filter($text, array $options = []) {
-        return \filter_rating\local\token_processor::process((string) $text, $this->context);
+    public function create_instance($record = null, ?array $options = null) {
+        $record = (object) (array) $record;
+
+        $defaults = [
+            'name' => 'Star rating',
+            'intro' => '',
+            'introformat' => FORMAT_HTML,
+            'showaverage' => 1,
+            'allowclear' => 1,
+        ];
+
+        foreach ($defaults as $field => $value) {
+            if (!isset($record->{$field})) {
+                $record->{$field} = $value;
+            }
+        }
+
+        return parent::create_instance($record, (array) $options);
     }
 }

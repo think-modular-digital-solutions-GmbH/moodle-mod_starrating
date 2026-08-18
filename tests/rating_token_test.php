@@ -14,17 +14,17 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
-namespace filter_rating;
+namespace mod_starrating;
 
-use filter_rating\local\rating_token;
+use mod_starrating\local\rating_token;
 
 /**
  * Tests for the signed rating links.
  *
- * @package    filter_rating
+ * @package    mod_starrating
  * @copyright  2026 Think Modular
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @covers     \filter_rating\local\rating_token
+ * @covers     \mod_starrating\local\rating_token
  */
 final class rating_token_test extends \advanced_testcase {
 
@@ -36,15 +36,14 @@ final class rating_token_test extends \advanced_testcase {
     public function test_token_is_bound_to_every_parameter(): void {
         $this->resetAfterTest();
 
-        $token = rating_token::generate(7, 42, 'teaching quality', 4);
+        $token = rating_token::generate(7, 42, 4);
 
-        $this->assertTrue(rating_token::validate($token, 7, 42, 'teaching quality', 4));
+        $this->assertTrue(rating_token::validate($token, 7, 42, 4));
 
-        // Another user, context, criterion or number of stars must not pass.
-        $this->assertFalse(rating_token::validate($token, 8, 42, 'teaching quality', 4));
-        $this->assertFalse(rating_token::validate($token, 7, 43, 'teaching quality', 4));
-        $this->assertFalse(rating_token::validate($token, 7, 42, 'materials', 4));
-        $this->assertFalse(rating_token::validate($token, 7, 42, 'teaching quality', 5));
+        // Another user, course module or number of stars must not pass.
+        $this->assertFalse(rating_token::validate($token, 8, 42, 4));
+        $this->assertFalse(rating_token::validate($token, 7, 43, 4));
+        $this->assertFalse(rating_token::validate($token, 7, 42, 5));
     }
 
     /**
@@ -55,8 +54,8 @@ final class rating_token_test extends \advanced_testcase {
     public function test_invalid_tokens_are_rejected(): void {
         $this->resetAfterTest();
 
-        $this->assertFalse(rating_token::validate('', 7, 42, 'materials', 1));
-        $this->assertFalse(rating_token::validate('not a token', 7, 42, 'materials', 1));
+        $this->assertFalse(rating_token::validate('', 7, 42, 1));
+        $this->assertFalse(rating_token::validate('not a token', 7, 42, 1));
     }
 
     /**
@@ -67,11 +66,11 @@ final class rating_token_test extends \advanced_testcase {
     public function test_secret_is_stable(): void {
         $this->resetAfterTest();
 
-        $first = rating_token::generate(7, 42, 'materials', 1);
-        $secret = get_config('filter_rating', 'tokensecret');
+        $first = rating_token::generate(7, 42, 1);
+        $secret = get_config('mod_starrating', 'tokensecret');
 
         $this->assertNotEmpty($secret);
-        $this->assertSame($first, rating_token::generate(7, 42, 'materials', 1));
-        $this->assertSame($secret, get_config('filter_rating', 'tokensecret'));
+        $this->assertSame($first, rating_token::generate(7, 42, 1));
+        $this->assertSame($secret, get_config('mod_starrating', 'tokensecret'));
     }
 }

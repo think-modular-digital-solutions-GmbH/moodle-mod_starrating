@@ -14,30 +14,25 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
-namespace filter_rating\output;
+namespace mod_starrating\output;
 
-use context;
-use filter_rating\local\rating_manager;
-use filter_rating\local\rating_token;
+use cm_info;
+use context_module;
+use mod_starrating\local\rating_manager;
+use mod_starrating\local\rating_token;
 use moodle_url;
 use renderable;
 use renderer_base;
 use templatable;
 
 /**
- * The five stars rendered in place of a rating token.
+ * The five stars of one star rating activity.
  *
- * Each star is a plain link to rate.php, which stores the rating and returns to
- * the page it was given on.
+ * Rendered inline on the course page, the way a label renders its text, and
+ * again on the activity page itself. Every star is a plain link to rate.php,
+ * which stores the rating and returns to the page it was given on.
  *
- * In the Moodle app the stars are rendered as a display only. A link in app
- * content can either be claimed by one of the core content link handlers, which
- * a filter plugin cannot register, or be handed to a browser, and the browser
- * route asks for a login again as soon as the six minute auto login lockout in
- * tool_mobile bites. Showing the rating without offering a broken way to change
- * it is the honest option.
- *
- * @package    filter_rating
+ * @package    mod_starrating
  * @copyright  2026 Think Modular
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -46,16 +41,14 @@ class rating_widget implements renderable, templatable {
     /**
      * Constructor.
      *
-     * @param context $context Context the widget is displayed in.
-     * @param int $courseid Course the criterion belongs to.
-     * @param string $criterion Normalised criterion.
-     * @param moodle_url|null $returnurl Page to return to after rating, null during a web service call.
+     * @param cm_info $cm The course module the stars belong to.
+     * @param moodle_url|null $returnurl Page to return to after rating.
+     * @param bool $showname Whether to show the activity name above the stars.
      */
     public function __construct(
-        protected context $context,
-        protected int $courseid,
-        protected string $criterion,
-        protected ?moodle_url $returnurl = null
+        protected cm_info $cm,
+        protected ?moodle_url $returnurl = null,
+        protected bool $showname = true
     ) {
     }
 
@@ -66,12 +59,15 @@ class rating_widget implements renderable, templatable {
      * @return array Template context.
      */
     public function export_for_template(renderer_base $output): array {
-        $userrating = rating_manager::get_user_rating($this->courseid, $this->criterion);
-        $stats = rating_manager::get_stats($this->courseid, $this->criterion);
-        // The app gets the read only variant, see the class comment.
-        $canrate = rating_manager::can_rate($this->context) && !\core_useragent::is_moodle_app();
-        $showaverage = (bool) get_config('filter_rating', 'showaverage');
-        $allowclear = (bool) get_config('filter_rating', 'allowclear');
+        $context = context_module::instance($this->cm->id);
+        $name = format_string($this->cm->name, true, ['context' => $context]);
+        $customdata = (array) $this->cm->customdata;
+
+        $userrating = rating_manager::get_user_rating($this->cm->instance);
+        $stats = rating_manager::get_stats($this->cm->instance);
+        $canrate = rating_manager::can_rate($context);
+        $showaverage = !empty($customdata['showaverage']);
+        $allowclear = !empty($customdata['allowclear']);
 
         $stars = [];
         for ($value = 1; $value <= rating_manager::MAX_STARS; $value++) {
@@ -79,34 +75,32 @@ class rating_widget implements renderable, templatable {
                 'value' => $value,
                 'on' => $value <= $userrating,
                 'url' => $canrate ? $this->build_rate_url($value)->out(false) : null,
-                'label' => get_string('ratestars', 'filter_rating', (object) [
+                'label' => get_string('ratestars', 'mod_starrating', (object) [
                     'stars' => $value,
                     'max' => rating_manager::MAX_STARS,
-                    'criterion' => $this->criterion,
+                    'criterion' => $name,
                 ]),
             ];
         }
 
         return [
-            'criterion' => $this->criterion,
-            'contextid' => $this->context->id,
-            'courseid' => $this->courseid,
+            'cmid' => $this->cm->id,
+            'instanceid' => $this->cm->instance,
+            'name' => $name,
+            'showname' => $this->showname,
             'userrating' => $userrating,
             'count' => $stats->count,
             'average' => $stats->average,
             'canrate' => $canrate,
             'stars' => $stars,
-            'grouplabel' => get_string('ratinggroup', 'filter_rating', $this->criterion),
-            'statustext' => rating_manager::get_status_text($this->criterion, $userrating),
+            'grouplabel' => get_string('ratinggroup', 'mod_starrating', $name),
+            'statustext' => rating_manager::get_status_text($name, $userrating),
             'showaverage' => $showaverage,
             'averagetext' => rating_manager::get_average_text($stats),
-            // The link is always rendered when withdrawing is allowed, only hidden
-            // while there is nothing to withdraw, so that the app can reveal it.
-            'showclear' => $canrate && $allowclear,
             'canclear' => $canrate && $allowclear && $userrating > 0,
             'clearurl' => $canrate ? $this->build_rate_url(0)->out(false) : null,
-            'clearlabel' => get_string('clearrating', 'filter_rating'),
-            'clearaltlabel' => get_string('clearratingaria', 'filter_rating', $this->criterion),
+            'clearlabel' => get_string('clearrating', 'mod_starrating'),
+            'clearaltlabel' => get_string('clearratingaria', 'mod_starrating', $name),
         ];
     }
 
@@ -119,18 +113,16 @@ class rating_widget implements renderable, templatable {
     protected function build_rate_url(int $rating): moodle_url {
         global $USER;
 
-        // The course is derived from the context by the endpoint, it is not a parameter.
         $params = [
-            'contextid' => $this->context->id,
-            'criterion' => $this->criterion,
+            'id' => $this->cm->id,
             'rating' => $rating,
-            'token' => rating_token::generate((int) $USER->id, (int) $this->context->id, $this->criterion, $rating),
+            'token' => rating_token::generate((int) $USER->id, (int) $this->cm->id, $rating),
         ];
 
         if ($this->returnurl) {
             $params['returnurl'] = $this->returnurl->out_as_local_url(false);
         }
 
-        return new moodle_url('/filter/rating/rate.php', $params);
+        return new moodle_url('/mod/starrating/rate.php', $params);
     }
 }

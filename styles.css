@@ -1,4 +1,16 @@
-/* Star rating filter. */
+/* Star rating activity. */
+
+.starrating-activity {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.5rem;
+    margin: 0.25rem 0;
+}
+
+.starrating-activity .starrating-name {
+    font-weight: bold;
+}
 
 .filter-rating {
     display: inline-flex;
@@ -68,7 +80,7 @@
 }
 
 /*
- * In the app the stars are the only control on the ratings tab, so they get a
+ * In the app the stars are the control on the activity page, so they get a
  * touch target that clears the WCAG 2.2 target size minimum.
  */
 .filter-rating-app .filter-rating-star {

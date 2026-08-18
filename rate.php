@@ -17,11 +17,7 @@
 /**
  * Stores a star rating and returns to the page the rating was given on.
  *
- * This is the browser path. The Moodle app never reaches it: there the tap on a
- * star is caught by mobile/init.js and saved through the filter_rating_set_rating
- * web service, without leaving the app.
- *
- * @package    filter_rating
+ * @package    mod_starrating
  * @copyright  2026 Think Modular
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -29,43 +25,32 @@
 require_once(__DIR__ . '/../../config.php');
 
 use core\output\notification;
-use filter_rating\local\rating_manager;
-use filter_rating\local\rating_token;
+use mod_starrating\local\rating_manager;
+use mod_starrating\local\rating_token;
 
-$contextid = required_param('contextid', PARAM_INT);
-$criterion = required_param('criterion', PARAM_TEXT);
+$id = required_param('id', PARAM_INT);
 $rating = required_param('rating', PARAM_INT);
 $token = optional_param('token', '', PARAM_ALPHANUM);
 $returnparam = optional_param('returnurl', '', PARAM_LOCALURL);
 
-[$context, $course, $cm] = get_context_info_array($contextid);
+[$course, $cm] = get_course_and_cm_from_cmid($id, 'starrating');
+require_login($course, false, $cm);
 
-if ($cm) {
-    require_login($course, false, $cm);
-} else if ($course && (int) $course->id !== (int) SITEID) {
-    require_login($course, false);
-} else {
-    require_login();
-}
+$context = context_module::instance($cm->id);
 
-$criterion = rating_manager::normalise_criterion($criterion);
-if ($criterion === '') {
-    throw new moodle_exception('invalidcriterion', 'filter_rating');
-}
 if ($rating < 0 || $rating > rating_manager::MAX_STARS) {
-    throw new moodle_exception('invalidrating', 'filter_rating');
+    throw new moodle_exception('invalidrating', 'mod_starrating');
 }
 
-$urlparams = ['contextid' => $contextid, 'criterion' => $criterion, 'rating' => $rating];
+$urlparams = ['id' => $cm->id, 'rating' => $rating];
 if ($returnparam !== '') {
     $urlparams['returnurl'] = $returnparam;
 }
 
 $PAGE->set_context($context);
-$PAGE->set_url(new moodle_url('/filter/rating/rate.php', $urlparams));
-$PAGE->set_pagelayout('standard');
-$PAGE->set_title(get_string('pluginname', 'filter_rating'));
-$PAGE->set_heading($course ? format_string($course->fullname) : format_string($SITE->fullname));
+$PAGE->set_url(new moodle_url('/mod/starrating/rate.php', $urlparams));
+$PAGE->set_title(format_string($cm->name));
+$PAGE->set_heading(format_string($course->fullname));
 
 rating_manager::require_can_rate($context);
 
@@ -73,29 +58,26 @@ rating_manager::require_can_rate($context);
 // has already been dropped by PARAM_LOCALURL.
 $returntarget = $returnparam !== '' ? $returnparam : get_local_referer(false);
 if (empty($returntarget)) {
-    $returntarget = ($course && (int) $course->id !== (int) SITEID)
-        ? new moodle_url('/course/view.php', ['id' => $course->id])
-        : new moodle_url('/');
+    $returntarget = new moodle_url('/course/view.php', ['id' => $course->id]);
 }
 $returnurl = new moodle_url($returntarget);
 
-// A rating is written on a link click, so the link itself carries the proof that
-// the user meant it. Should the token be missing or stale, for example because
-// the rendered stars were cached, ask for confirmation rather than fail: losing
-// the click is worse, and the confirmation is protected by the session key.
-$signed = rating_token::validate($token, (int) $USER->id, (int) $context->id, $criterion, $rating);
+// The link itself carries the proof that the user meant it. Should the token be
+// missing or stale, for example because the course page was cached, ask for
+// confirmation rather than fail, and protect that with the session key.
+$signed = rating_token::validate($token, (int) $USER->id, (int) $cm->id, $rating);
 
 if (!$signed && !confirm_sesskey()) {
-    $confirmurl = new moodle_url('/filter/rating/rate.php', $urlparams + ['sesskey' => sesskey()]);
+    $confirmurl = new moodle_url('/mod/starrating/rate.php', $urlparams + ['sesskey' => sesskey()]);
 
     if ($rating > 0) {
-        $message = get_string('confirmrating', 'filter_rating', (object) [
+        $message = get_string('confirmrating', 'mod_starrating', (object) [
             'stars' => $rating,
             'max' => rating_manager::MAX_STARS,
-            'criterion' => $criterion,
+            'criterion' => format_string($cm->name),
         ]);
     } else {
-        $message = get_string('confirmclearrating', 'filter_rating', $criterion);
+        $message = get_string('confirmclearrating', 'mod_starrating', format_string($cm->name));
     }
 
     echo $OUTPUT->header();
@@ -104,10 +86,10 @@ if (!$signed && !confirm_sesskey()) {
     exit;
 }
 
-rating_manager::set_rating($context, rating_manager::get_courseid_from_context($context), $criterion, $rating);
+rating_manager::set_rating($context, (int) $cm->instance, $rating);
 
 $message = $rating > 0
-    ? get_string('ratingsaved', 'filter_rating')
-    : get_string('ratingcleared', 'filter_rating');
+    ? get_string('ratingsaved', 'mod_starrating')
+    : get_string('ratingcleared', 'mod_starrating');
 
 redirect($returnurl, $message, null, notification::NOTIFY_SUCCESS);

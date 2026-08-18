@@ -14,23 +14,23 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
-namespace filter_rating\output;
+namespace mod_starrating\output;
 
 use context_course;
 use core_user\fields;
-use filter_rating\local\rating_manager;
-use filter_rating\local\report;
 use html_writer;
+use mod_starrating\local\rating_manager;
+use mod_starrating\local\report;
 use moodle_url;
 use table_sql;
 
 /**
- * The individual ratings listed at the bottom of the rating report.
+ * The individual ratings listed at the bottom of the star rating report.
  *
  * Requires lib/tablelib.php, which the report page includes before this class
  * is autoloaded.
  *
- * @package    filter_rating
+ * @package    mod_starrating
  * @copyright  2026 Think Modular
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -42,19 +42,19 @@ class ratings_table extends table_sql {
      * @param string $uniqueid Unique id of the table.
      * @param moodle_url $baseurl Report URL carrying the current filter.
      * @param int $courseid Restrict to this course, 0 for all courses.
-     * @param string $criterion Restrict to this criterion, empty for all criteria.
+     * @param string $activity Restrict to this activity name, empty for all.
      */
-    public function __construct(string $uniqueid, moodle_url $baseurl, int $courseid, string $criterion) {
+    public function __construct(string $uniqueid, moodle_url $baseurl, int $courseid, string $activity) {
         parent::__construct($uniqueid);
 
         $this->define_baseurl($baseurl);
         $this->define_columns(['coursename', 'criterion', 'fullname', 'rating', 'timemodified']);
         $this->define_headers([
-            get_string('colcourse', 'filter_rating'),
-            get_string('colcriterion', 'filter_rating'),
-            get_string('coluser', 'filter_rating'),
-            get_string('colrating', 'filter_rating'),
-            get_string('coltimemodified', 'filter_rating'),
+            get_string('colcourse', 'mod_starrating'),
+            get_string('colcriterion', 'mod_starrating'),
+            get_string('coluser', 'mod_starrating'),
+            get_string('colrating', 'mod_starrating'),
+            get_string('coltimemodified', 'mod_starrating'),
         ]);
 
         $this->sortable(true, 'timemodified', SORT_DESC);
@@ -65,12 +65,12 @@ class ratings_table extends table_sql {
 
         // Alias u, no named parameters, no prefix, no id rename, leading comma.
         $namefields = fields::for_name()->get_sql('u', false, '', '', true);
-        [$where, $params] = report::get_filter_sql($courseid, $criterion);
+        [$where, $params] = report::get_filter_sql($courseid, $activity);
 
         $this->set_sql(
-            'r.id, r.courseid, r.criterion, r.rating, r.timemodified, r.userid, c.fullname AS coursename' .
-                $namefields->selects,
-            '{filter_rating} r JOIN {course} c ON c.id = r.courseid JOIN {user} u ON u.id = r.userid',
+            'r.id, r.rating, r.timemodified, r.userid, s.course AS courseid, s.name AS criterion,
+             c.fullname AS coursename' . $namefields->selects,
+            report::FROM . ' JOIN {user} u ON u.id = r.userid',
             $where,
             array_merge($params, $namefields->params)
         );
@@ -93,7 +93,7 @@ class ratings_table extends table_sql {
     }
 
     /**
-     * The criterion that was rated.
+     * The activity that was rated, which is the criterion.
      *
      * @param \stdClass $row Table row.
      * @return string
@@ -128,7 +128,7 @@ class ratings_table extends table_sql {
      * @return string
      */
     public function col_rating($row) {
-        return get_string('starsofmax', 'filter_rating', (object) [
+        return get_string('starsofmax', 'mod_starrating', (object) [
             'stars' => (int) $row->rating,
             'max' => rating_manager::MAX_STARS,
         ]);
