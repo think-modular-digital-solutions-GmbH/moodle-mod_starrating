@@ -97,9 +97,15 @@ signatures instead of guessing.** That is how the
 the core `rating` table collision and the six minute auto login lockout were all
 caught.
 
-Testing anything app side needs a **log out and log in in the app**: the app
-fetches site plugins only on `CoreEvents.LOGIN`, so a logged in app never sees a
-new or changed `db/mobile.php`.
+**Always tell the user what the app needs for a change to take effect**, and say
+so even when the answer is nothing. Standing instruction from 2026-08-18.
+
+| Changed | App action |
+| :--- | :--- |
+| `db/mobile.php`, `styles.css`, anything in `$addons` | Log out and log in — site plugins are only fetched on `CoreEvents.LOGIN` |
+| `classes/output/mobile.php`, `mobile_*` templates | Pull to refresh, or clear the app cache — `tool_mobile_get_content` results are cached |
+| Web service code only | Nothing; the rating calls run with `getFromCache: 0` |
+| `version.php` bumped | Moodle *Notifications* and purge caches first, then whatever the app needs |
 
 Against a real installation:
 
