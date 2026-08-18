@@ -42,7 +42,7 @@ class backup_starrating_activity_structure_step extends backup_activity_structur
         $userinfo = $this->get_setting_value('userinfo');
 
         $starrating = new backup_nested_element('starrating', ['id'], [
-            'name', 'intro', 'introformat', 'showaverage', 'allowclear', 'timecreated', 'timemodified',
+            'name', 'intro', 'introformat', 'maxstars', 'showaverage', 'allowclear', 'timecreated', 'timemodified',
         ]);
 
         $ratings = new backup_nested_element('ratings');

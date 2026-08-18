@@ -26,11 +26,12 @@ use renderer_base;
 use templatable;
 
 /**
- * The five stars of one star rating activity.
+ * The stars of one star rating activity.
  *
- * Rendered inline on the course page, the way a label renders its text, and
- * again on the activity page itself. Every star is a plain link to rate.php,
- * which stores the rating and returns to the page it was given on.
+ * How many there are is a per activity setting, two to ten. Rendered inline on
+ * the course page, the way a label renders its text, and again on the activity
+ * page itself. Every star is a plain link to rate.php, which stores the rating
+ * and returns to the page it was given on.
  *
  * @package    mod_starrating
  * @copyright  2026 Think Modular
@@ -69,15 +70,21 @@ class rating_widget implements renderable, templatable {
         $showaverage = !empty($customdata['showaverage']);
         $allowclear = !empty($customdata['allowclear']);
 
+        // The scale travels in the course cache, so the course page needs no
+        // extra query, but a cache built before the setting existed has none.
+        $maxstars = isset($customdata['maxstars'])
+            ? rating_manager::normalise_max_stars($customdata['maxstars'])
+            : rating_manager::get_max_stars($this->cm->instance);
+
         $stars = [];
-        for ($value = 1; $value <= rating_manager::MAX_STARS; $value++) {
+        for ($value = 1; $value <= $maxstars; $value++) {
             $stars[] = [
                 'value' => $value,
                 'on' => $value <= $userrating,
                 'url' => $canrate ? $this->build_rate_url($value)->out(false) : null,
                 'label' => get_string('ratestars', 'mod_starrating', (object) [
                     'stars' => $value,
-                    'max' => rating_manager::MAX_STARS,
+                    'max' => $maxstars,
                     'criterion' => $name,
                 ]),
             ];
@@ -89,14 +96,15 @@ class rating_widget implements renderable, templatable {
             'name' => $name,
             'showname' => $this->showname,
             'userrating' => $userrating,
+            'maxstars' => $maxstars,
             'count' => $stats->count,
             'average' => $stats->average,
             'canrate' => $canrate,
             'stars' => $stars,
             'grouplabel' => get_string('ratinggroup', 'mod_starrating', $name),
-            'statustext' => rating_manager::get_status_text($name, $userrating),
+            'statustext' => rating_manager::get_status_text($name, $userrating, $maxstars),
             'showaverage' => $showaverage,
-            'averagetext' => rating_manager::get_average_text($stats),
+            'averagetext' => rating_manager::get_average_text($stats, $maxstars),
             'canclear' => $canrate && $allowclear && $userrating > 0,
             'clearurl' => $canrate ? $this->build_rate_url(0)->out(false) : null,
             'clearlabel' => get_string('clearrating', 'mod_starrating'),

@@ -47,6 +47,7 @@ class mod_starrating_generator extends testing_module_generator {
             'name' => 'Star rating',
             'intro' => '',
             'introformat' => FORMAT_HTML,
+            'maxstars' => \mod_starrating\local\rating_manager::DEFAULT_MAX_STARS,
             'showaverage' => 1,
             'allowclear' => 1,
         ];

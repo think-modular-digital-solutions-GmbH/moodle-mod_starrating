@@ -16,12 +16,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   activity natively, which it could never do for a link inside filtered text.
 - The stars appear directly on the course page, the way a label shows its text,
   so rating is still a single click without opening anything.
-
-### Changed
-
 - The report is now two pages, *Star rating averages* and *Star ratings by
   user*, instead of one page holding both. The filter carries over between
   them.
+- **The number of stars is no longer fixed at five.** It is a per activity
+  setting between 2 and 10, with a site wide default. Existing activities keep
+  their five stars.
+- Averages over a selection that mixes activities with scales of different
+  lengths are reported as a share of the scale instead of as stars, because four
+  of five and eight of ten are the same judgement and adding them up as stars
+  would not be. Rows on a single scale are unchanged.
+- The course overview page and the course report show the length of each scale,
+  and the individual ratings say which scale each rating was given on.
 
 ### Fixed
 
@@ -45,7 +51,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Star rating activity with five stars on the course page, one rating per
+- **A course report for teachers**, *Star ratings* in the course menu and in the
+  menu of every star rating activity. It lists the average per activity of the
+  course, including activities nobody has rated yet, and every individual rating
+  with the person who gave it, sortable, paged and downloadable. Behind the new
+  capability `mod/starrating:viewcoursereport`, which teachers, editing teachers
+  and managers have by default.
+- **A per activity setting for how many stars people choose from**, 2 to 10,
+  with a site wide default under *Site administration → Plugins → Activity
+  modules → Star rating*. The scale of an activity that has already been rated
+  can be lengthened at any time and shortened down to the highest rating given,
+  no further, because ratings above the maximum could no longer be shown.
+- `mod_starrating_get_rating` and `mod_starrating_set_rating` return the scale
+  of the activity as `maxstars`.
+- Star rating activity with stars on the course page, one rating per
   person, changeable and withdrawable.
 - Moodle app support with no JavaScript: the stars on the course page link into
   the activity, which the app opens natively, and there the stars submit through

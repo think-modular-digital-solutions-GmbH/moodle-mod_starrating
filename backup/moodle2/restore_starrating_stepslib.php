@@ -24,6 +24,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+use mod_starrating\local\rating_manager;
+
 /**
  * Restore one star rating activity from a backup.
  *
@@ -63,6 +65,9 @@ class restore_starrating_activity_structure_step extends restore_activity_struct
         $data = (object) $data;
         $oldid = $data->id;
         $data->course = $this->get_courseid();
+
+        // A backup taken before the scale was configurable carries no maxstars.
+        $data->maxstars = rating_manager::normalise_max_stars($data->maxstars ?? 0);
 
         $newitemid = $DB->insert_record('starrating', $data);
         $this->apply_activity_instance($newitemid);

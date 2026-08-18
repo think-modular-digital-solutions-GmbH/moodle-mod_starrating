@@ -38,8 +38,10 @@ require_login($course, false, $cm);
 
 $context = context_module::instance($cm->id);
 
-if ($rating < 0 || $rating > rating_manager::MAX_STARS) {
-    throw new moodle_exception('invalidrating', 'mod_starrating');
+$maxstars = rating_manager::get_max_stars((int) $cm->instance);
+
+if ($rating < 0 || $rating > $maxstars) {
+    throw new moodle_exception('invalidrating', 'mod_starrating', '', $maxstars);
 }
 
 $urlparams = ['id' => $cm->id, 'rating' => $rating];
@@ -73,7 +75,7 @@ if (!$signed && !confirm_sesskey()) {
     if ($rating > 0) {
         $message = get_string('confirmrating', 'mod_starrating', (object) [
             'stars' => $rating,
-            'max' => rating_manager::MAX_STARS,
+            'max' => $maxstars,
             'criterion' => format_string($cm->name),
         ]);
     } else {

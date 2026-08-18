@@ -43,19 +43,30 @@ class ratings_table extends table_sql {
      * @param moodle_url $baseurl Report URL carrying the current filter.
      * @param int $courseid Restrict to this course, 0 for all courses.
      * @param string $activity Restrict to this activity name, empty for all.
+     * @param bool $showcourse Whether to show the course column, which says nothing
+     *                         in a report that is about one course already.
      */
-    public function __construct(string $uniqueid, moodle_url $baseurl, int $courseid, string $activity) {
+    public function __construct(string $uniqueid, moodle_url $baseurl, int $courseid, string $activity,
+            bool $showcourse = true) {
         parent::__construct($uniqueid);
 
-        $this->define_baseurl($baseurl);
-        $this->define_columns(['coursename', 'criterion', 'fullname', 'rating', 'timemodified']);
-        $this->define_headers([
+        $columns = ['coursename', 'criterion', 'fullname', 'rating', 'timemodified'];
+        $headers = [
             get_string('colcourse', 'mod_starrating'),
             get_string('colcriterion', 'mod_starrating'),
             get_string('coluser', 'mod_starrating'),
             get_string('colrating', 'mod_starrating'),
             get_string('coltimemodified', 'mod_starrating'),
-        ]);
+        ];
+
+        if (!$showcourse) {
+            array_shift($columns);
+            array_shift($headers);
+        }
+
+        $this->define_baseurl($baseurl);
+        $this->define_columns($columns);
+        $this->define_headers($headers);
 
         $this->sortable(true, 'timemodified', SORT_DESC);
         $this->no_sorting('fullname');
@@ -69,7 +80,7 @@ class ratings_table extends table_sql {
 
         $this->set_sql(
             'r.id, r.rating, r.timemodified, r.userid, s.course AS courseid, s.name AS criterion,
-             c.fullname AS coursename' . $namefields->selects,
+             s.maxstars, c.fullname AS coursename' . $namefields->selects,
             report::FROM . ' JOIN {user} u ON u.id = r.userid',
             $where,
             array_merge($params, $namefields->params)
@@ -130,7 +141,7 @@ class ratings_table extends table_sql {
     public function col_rating($row) {
         return get_string('starsofmax', 'mod_starrating', (object) [
             'stars' => (int) $row->rating,
-            'max' => rating_manager::MAX_STARS,
+            'max' => rating_manager::normalise_max_stars($row->maxstars),
         ]);
     }
 

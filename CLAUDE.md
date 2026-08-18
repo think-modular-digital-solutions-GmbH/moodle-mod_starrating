@@ -4,10 +4,11 @@ Guidance for Claude Code when working in this repository.
 
 ## What this is
 
-`mod_starrating` — a Moodle **activity module**. Five stars rendered directly on
-the course page, the way a label renders its text. The **name of the activity is
-the criterion**, so there is no token and nothing to parse. Plus a site wide
-report over all ratings.
+`mod_starrating` — a Moodle **activity module**. A row of stars rendered directly
+on the course page, the way a label renders its text. The **name of the activity
+is the criterion**, so there is no token and nothing to parse. How long the scale
+is, 2 to 10 stars, is a per activity setting. Plus a course report for teachers
+and a site wide report over all ratings.
 
 **The repository root is the plugin root.** It is deployed to `mod/starrating/`
 inside a Moodle installation, so `version.php` sits at the top level, not in a
@@ -40,7 +41,23 @@ Target: Moodle 4.3 and later, developed against Moodle 4.5 LTS.
   (`lib/db/install.xml`, the core Ratings API), and an activity's main table
   must be named after the module. Hence `starrating`.
 - **A rating is keyed on activity + user.** The criterion is the activity name,
-  so the report groups by `starrating.name`.
+  so the site report groups by `starrating.name`. The **course** report groups by
+  activity instead, because one course can hold two activities with the same
+  name, and it left joins the ratings so an unrated activity still gets a row.
+- **The scale length lives in `starrating.maxstars`, never in a constant.**
+  `rating_manager::MAX_STARS` is gone; there are `MIN_MAX_STARS`,
+  `DEFAULT_MAX_STARS` and `ABSOLUTE_MAX_STARS`, and `get_max_stars($instanceid)`
+  for the actual value. Anything coming from a form, a backup or a web service
+  goes through `normalise_max_stars()` first.
+- **Averages are computed as `AVG(rating * 1.0000 / maxstars)`, not
+  `AVG(rating)`.** A report row can span activities on different scales, where
+  four of five and eight of ten are the same judgement and adding them as stars
+  is not. `report::read_average()` reports the shared scale, or 0 when the group
+  mixes scales, and the renderer then falls back to a percentage. For a single
+  scale the figure is identical to the plain average, so nothing was given up.
+- **A scale can be lengthened freely and shortened only to the highest rating
+  given** (`mod_form.php::validation()`). Shortening past it would leave stored
+  ratings that no row of stars can show.
 - **It was a text filter until 2026-08-18 and must not go back.** A link inside
   filtered text can only be claimed by a core content link handler, which a
   filter cannot register, or be handed to a browser — where `tool_mobile`'s six

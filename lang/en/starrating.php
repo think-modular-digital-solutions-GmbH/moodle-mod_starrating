@@ -32,6 +32,7 @@ $string['allowclear'] = 'Allow withdrawing a rating';
 $string['allowclear_desc'] = 'Default for new activities: show a link that lets people remove the rating they gave.';
 $string['allowclear_help'] = 'Shows a link next to the stars with which people can remove the rating they gave.';
 $string['applyfilter'] = 'Apply filter';
+$string['averagemixed'] = 'Average {$a->percent}% of the scale from {$a->count} ratings, on scales of different lengths';
 $string['averages'] = 'Averages';
 $string['averagescaption'] = 'Average rating per selected grouping';
 $string['averagetext'] = 'Average {$a->average} of {$a->max} from {$a->count} ratings';
@@ -42,10 +43,13 @@ $string['colcourse'] = 'Course';
 $string['colcriterion'] = 'Activity';
 $string['colrating'] = 'Rating';
 $string['colratings'] = 'Ratings';
+$string['colscale'] = 'Stars';
 $string['coltimemodified'] = 'Last changed';
 $string['coluser'] = 'User';
 $string['confirmclearrating'] = 'Do you want to withdraw your rating for "{$a}"?';
 $string['confirmrating'] = 'Do you want to rate "{$a->criterion}" with {$a->stars} of {$a->max} stars?';
+$string['coursereport'] = 'Star ratings';
+$string['coursesummarycaption'] = 'Average rating per star rating activity of this course';
 $string['details'] = 'Individual ratings';
 $string['displaysettings'] = 'Display';
 $string['eventratingsubmitted'] = 'Star rating submitted';
@@ -57,13 +61,19 @@ $string['groupbycourse'] = 'Course';
 $string['groupbycoursecriterion'] = 'Course and activity';
 $string['groupbycriterion'] = 'Activity';
 $string['guestcannotrate'] = 'Guests cannot rate. Please log in to submit a rating.';
-$string['invalidrating'] = 'The rating must be a number of stars between 0 and 5.';
+$string['invalidrating'] = 'The rating must be a number of stars between 0 and {$a}.';
+$string['maxstars'] = 'Number of stars';
+$string['maxstars_desc'] = 'Default for new activities: how many stars people choose from.';
+$string['maxstars_help'] = 'How many stars people choose from, between 2 and 10. A longer scale lets people be more precise, a shorter one is quicker to judge.
+
+The scale of an activity that has already been rated can be lengthened at any time, but it can only be shortened down to the highest rating anybody has given, because ratings above the new maximum could no longer be shown.';
+$string['maxstarstoolow'] = 'This activity has already been rated with {$a} stars, so the scale cannot be made shorter than that.';
 $string['modulename'] = 'Star rating';
-$string['modulename_help'] = 'The star rating activity puts five stars on the course page. Everyone with the right permission can give one rating, and change or withdraw it later.
+$string['modulename_help'] = 'The star rating activity puts a row of stars on the course page. Everyone with the right permission can give one rating, and change or withdraw it later.
 
-The name of the activity is what is being rated, so add one activity per thing you want feedback on. The stars appear directly on the course page, like a label, and work in the Moodle app as well.
+The name of the activity is what is being rated, so add one activity per thing you want feedback on. How many stars people choose from is set per activity, between 2 and 10. The stars appear directly on the course page, like a label, and work in the Moodle app as well.
 
-Site administration reports the averages per course and per activity.';
+Teachers see the ratings of their own course under *Star ratings* in the course menu; site administration reports the averages across all courses.';
 $string['modulenameplural'] = 'Star ratings';
 $string['noratingsyet'] = 'No ratings yet';
 $string['noresults'] = 'No ratings match the current filter.';
@@ -91,6 +101,7 @@ $string['showaverage_desc'] = 'Default for new activities: show the average rati
 $string['showaverage_help'] = 'Shows the average rating and the number of ratings next to the stars.';
 $string['starrating:addinstance'] = 'Add a new star rating';
 $string['starrating:rate'] = 'Submit a star rating';
+$string['starrating:viewcoursereport'] = 'View the star ratings of a course, including who rated what';
 $string['starrating:viewreports'] = 'View the star rating report, including who rated what';
 $string['starsofmax'] = '{$a->stars} of {$a->max}';
 $string['yourrating'] = 'Your rating for {$a->criterion}: {$a->stars} of {$a->max} stars';

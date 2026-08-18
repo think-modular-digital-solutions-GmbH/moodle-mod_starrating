@@ -32,6 +32,7 @@ $string['allowclear'] = 'Zurückziehen einer Bewertung erlauben';
 $string['allowclear_desc'] = 'Voreinstellung für neue Aktivitäten: einen Link anzeigen, mit dem die eigene Bewertung entfernt werden kann.';
 $string['allowclear_help'] = 'Zeigt neben den Sternen einen Link an, mit dem die eigene Bewertung wieder entfernt werden kann.';
 $string['applyfilter'] = 'Filter anwenden';
+$string['averagemixed'] = 'Durchschnitt {$a->percent}% der Skala aus {$a->count} Bewertungen, bei unterschiedlich langen Skalen';
 $string['averages'] = 'Durchschnittswerte';
 $string['averagescaption'] = 'Durchschnittliche Bewertung je gewählter Gruppierung';
 $string['averagetext'] = 'Durchschnitt {$a->average} von {$a->max} aus {$a->count} Bewertungen';
@@ -42,10 +43,13 @@ $string['colcourse'] = 'Kurs';
 $string['colcriterion'] = 'Aktivität';
 $string['colrating'] = 'Bewertung';
 $string['colratings'] = 'Bewertungen';
+$string['colscale'] = 'Sterne';
 $string['coltimemodified'] = 'Zuletzt geändert';
 $string['coluser'] = 'Nutzer/in';
 $string['confirmclearrating'] = 'Möchten Sie Ihre Bewertung für „{$a}“ zurückziehen?';
 $string['confirmrating'] = 'Möchten Sie „{$a->criterion}“ mit {$a->stars} von {$a->max} Sternen bewerten?';
+$string['coursereport'] = 'Sternebewertungen';
+$string['coursesummarycaption'] = 'Durchschnittliche Bewertung je Sternebewertung dieses Kurses';
 $string['details'] = 'Einzelne Bewertungen';
 $string['displaysettings'] = 'Darstellung';
 $string['eventratingsubmitted'] = 'Sternebewertung abgegeben';
@@ -57,13 +61,19 @@ $string['groupbycourse'] = 'Kurs';
 $string['groupbycoursecriterion'] = 'Kurs und Aktivität';
 $string['groupbycriterion'] = 'Aktivität';
 $string['guestcannotrate'] = 'Gäste können nicht bewerten. Bitte melden Sie sich an, um eine Bewertung abzugeben.';
-$string['invalidrating'] = 'Die Bewertung muss eine Anzahl von 0 bis 5 Sternen sein.';
+$string['invalidrating'] = 'Die Bewertung muss eine Anzahl von 0 bis {$a} Sternen sein.';
+$string['maxstars'] = 'Anzahl der Sterne';
+$string['maxstars_desc'] = 'Voreinstellung für neue Aktivitäten: Anzahl der Sterne, aus denen ausgewählt wird.';
+$string['maxstars_help'] = 'Anzahl der Sterne, aus denen ausgewählt wird, zwischen 2 und 10. Eine längere Skala erlaubt genauere Abstufungen, eine kürzere ist schneller zu beurteilen.
+
+Die Skala einer bereits bewerteten Aktivität kann jederzeit verlängert werden. Verkürzen ist nur bis zur höchsten bereits abgegebenen Bewertung möglich, da Bewertungen über dem neuen Maximum nicht mehr darstellbar wären.';
+$string['maxstarstoolow'] = 'Diese Aktivität wurde bereits mit {$a} Sternen bewertet. Die Skala kann daher nicht kürzer als das sein.';
 $string['modulename'] = 'Sternebewertung';
-$string['modulename_help'] = 'Die Aktivität „Sternebewertung“ stellt fünf Sterne auf die Kursseite. Alle mit der entsprechenden Berechtigung können eine Bewertung abgeben und diese später ändern oder zurückziehen.
+$string['modulename_help'] = 'Die Aktivität „Sternebewertung“ stellt eine Reihe von Sternen auf die Kursseite. Alle mit der entsprechenden Berechtigung können eine Bewertung abgeben und diese später ändern oder zurückziehen.
 
-Der Name der Aktivität ist das, was bewertet wird. Legen Sie daher eine Aktivität je Gegenstand an, zu dem Sie Rückmeldung möchten. Die Sterne erscheinen direkt auf der Kursseite wie bei einem Textfeld und funktionieren auch in der Moodle App.
+Der Name der Aktivität ist das, was bewertet wird. Legen Sie daher eine Aktivität je Gegenstand an, zu dem Sie Rückmeldung möchten. Wie viele Sterne zur Auswahl stehen, wird je Aktivität eingestellt, zwischen 2 und 10. Die Sterne erscheinen direkt auf der Kursseite wie bei einem Textfeld und funktionieren auch in der Moodle App.
 
-Die Website-Administration weist die Durchschnittswerte je Kurs und je Aktivität aus.';
+Lehrende sehen die Bewertungen ihres Kurses über „Sternebewertungen“ im Kursmenü, die Website-Administration weist die Durchschnittswerte über alle Kurse aus.';
 $string['modulenameplural'] = 'Sternebewertungen';
 $string['noratingsyet'] = 'Noch keine Bewertungen';
 $string['noresults'] = 'Keine Bewertungen entsprechen dem aktuellen Filter.';
@@ -91,6 +101,7 @@ $string['showaverage_desc'] = 'Voreinstellung für neue Aktivitäten: Durchschni
 $string['showaverage_help'] = 'Zeigt neben den Sternen den Durchschnitt und die Anzahl der Bewertungen an.';
 $string['starrating:addinstance'] = 'Neue Sternebewertung hinzufügen';
 $string['starrating:rate'] = 'Sternebewertung abgeben';
+$string['starrating:viewcoursereport'] = 'Sternebewertungen eines Kurses einschließlich der bewertenden Personen ansehen';
 $string['starrating:viewreports'] = 'Bericht zu Sternebewertungen einschließlich der bewertenden Personen ansehen';
 $string['starsofmax'] = '{$a->stars} von {$a->max}';
 $string['yourrating'] = 'Ihre Bewertung für {$a->criterion}: {$a->stars} von {$a->max} Sternen';

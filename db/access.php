@@ -50,6 +50,18 @@ $capabilities = [
         ],
     ],
 
+    // View the rating report of one course, which shows who rated what in it.
+    'mod/starrating:viewcoursereport' => [
+        'riskbitmask' => RISK_PERSONAL,
+        'captype' => 'read',
+        'contextlevel' => CONTEXT_COURSE,
+        'archetypes' => [
+            'teacher' => CAP_ALLOW,
+            'editingteacher' => CAP_ALLOW,
+            'manager' => CAP_ALLOW,
+        ],
+    ],
+
     // View the site wide rating report, which shows who rated what.
     'mod/starrating:viewreports' => [
         'riskbitmask' => RISK_PERSONAL,

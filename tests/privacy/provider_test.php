@@ -53,6 +53,9 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
     protected function setUp(): void {
         parent::setUp();
 
+        // Keyed on instance id, and PHPUnit resets the sequences between tests.
+        rating_manager::reset_caches();
+
         $this->resetAfterTest();
 
         $course = $this->getDataGenerator()->create_course();

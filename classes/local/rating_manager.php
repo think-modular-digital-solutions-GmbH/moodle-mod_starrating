@@ -32,8 +32,14 @@ use stdClass;
  */
 class rating_manager {
 
-    /** @var int Number of stars an activity is rated with. */
-    public const MAX_STARS = 5;
+    /** @var int Shortest rating scale an activity can use. A scale needs at least two values. */
+    public const MIN_MAX_STARS = 2;
+
+    /** @var int Longest rating scale an activity can use. */
+    public const ABSOLUTE_MAX_STARS = 10;
+
+    /** @var int Scale an activity uses when nothing else is configured. */
+    public const DEFAULT_MAX_STARS = 5;
 
     /** @var string Table holding the ratings. */
     public const TABLE = 'starrating_rating';
@@ -43,6 +49,82 @@ class rating_manager {
 
     /** @var array<int, stdClass> Request level cache of statistics, keyed by activity. */
     protected static array $stats = [];
+
+    /** @var array<int, int> Request level cache of scale lengths, keyed by activity. */
+    protected static array $maxstars = [];
+
+    /**
+     * The scale lengths an activity may be configured with.
+     *
+     * @return array<int, string> Number of stars to its own label, for a select.
+     */
+    public static function get_max_stars_options(): array {
+        $options = [];
+        for ($value = self::MIN_MAX_STARS; $value <= self::ABSOLUTE_MAX_STARS; $value++) {
+            $options[$value] = (string) $value;
+        }
+
+        return $options;
+    }
+
+    /**
+     * Force a scale length coming from a form, a backup or a web service into range.
+     *
+     * @param mixed $value The value to check.
+     * @return int A scale length this plugin supports.
+     */
+    public static function normalise_max_stars($value): int {
+        $value = (int) $value;
+
+        if ($value < self::MIN_MAX_STARS || $value > self::ABSOLUTE_MAX_STARS) {
+            return self::DEFAULT_MAX_STARS;
+        }
+
+        return $value;
+    }
+
+    /**
+     * The scale length new activities start out with, from the site setting.
+     *
+     * @return int
+     */
+    public static function get_default_max_stars(): int {
+        return self::normalise_max_stars(get_config('mod_starrating', 'maxstars') ?: self::DEFAULT_MAX_STARS);
+    }
+
+    /**
+     * The scale length one activity is rated on.
+     *
+     * @param int $starratingid Activity instance id.
+     * @return int
+     */
+    public static function get_max_stars(int $starratingid): int {
+        global $DB;
+
+        if (!array_key_exists($starratingid, self::$maxstars)) {
+            $stored = $DB->get_field('starrating', 'maxstars', ['id' => $starratingid]);
+            self::$maxstars[$starratingid] = self::normalise_max_stars($stored);
+        }
+
+        return self::$maxstars[$starratingid];
+    }
+
+    /**
+     * The highest rating anybody gave to an activity.
+     *
+     * Shortening the scale of an activity that is already rated would leave
+     * ratings above the new maximum, so the form checks this first.
+     *
+     * @param int $starratingid Activity instance id.
+     * @return int Number of stars, 0 when the activity has no ratings.
+     */
+    public static function get_highest_rating(int $starratingid): int {
+        global $DB;
+
+        $sql = 'SELECT MAX(rating) FROM {' . self::TABLE . '} WHERE starratingid = :starratingid';
+
+        return (int) $DB->get_field_sql($sql, ['starratingid' => $starratingid]);
+    }
 
     /**
      * Whether the current user may submit a rating in this context.
@@ -123,7 +205,7 @@ class rating_manager {
      *
      * @param context $context Context of the activity.
      * @param int $starratingid Activity instance id.
-     * @param int $rating Number of stars, 1 to 5, or 0 to withdraw the rating.
+     * @param int $rating Number of stars, 1 to the scale length of the activity, or 0 to withdraw the rating.
      * @param int|null $userid Defaults to the current user.
      * @return int The stored rating.
      */
@@ -131,9 +213,10 @@ class rating_manager {
         global $DB, $USER;
 
         $userid = $userid ?? (int) $USER->id;
+        $maxstars = self::get_max_stars($starratingid);
 
-        if ($rating < 0 || $rating > self::MAX_STARS) {
-            throw new \moodle_exception('invalidrating', 'mod_starrating');
+        if ($rating < 0 || $rating > $maxstars) {
+            throw new \moodle_exception('invalidrating', 'mod_starrating', '', $maxstars);
         }
 
         $conditions = ['starratingid' => $starratingid, 'userid' => $userid];
@@ -174,13 +257,14 @@ class rating_manager {
      *
      * @param string $name Name of the activity, which is the criterion.
      * @param int $userrating Number of stars the user gave.
+     * @param int $maxstars Length of the rating scale.
      * @return string
      */
-    public static function get_status_text(string $name, int $userrating): string {
+    public static function get_status_text(string $name, int $userrating, int $maxstars): string {
         if ($userrating > 0) {
             return get_string('yourrating', 'mod_starrating', (object) [
                 'stars' => $userrating,
-                'max' => self::MAX_STARS,
+                'max' => $maxstars,
                 'criterion' => $name,
             ]);
         }
@@ -192,16 +276,17 @@ class rating_manager {
      * The average of all ratings in words.
      *
      * @param stdClass $stats Statistics as returned by get_stats().
+     * @param int $maxstars Length of the rating scale.
      * @return string
      */
-    public static function get_average_text(stdClass $stats): string {
+    public static function get_average_text(stdClass $stats, int $maxstars): string {
         if ($stats->count === 0) {
             return get_string('noratingsyet', 'mod_starrating');
         }
 
         return get_string('averagetext', 'mod_starrating', (object) [
             'average' => format_float($stats->average, 1),
-            'max' => self::MAX_STARS,
+            'max' => $maxstars,
             'count' => $stats->count,
         ]);
     }
@@ -214,5 +299,6 @@ class rating_manager {
     public static function reset_caches(): void {
         self::$userratings = [];
         self::$stats = [];
+        self::$maxstars = [];
     }
 }

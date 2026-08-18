@@ -59,14 +59,16 @@ class get_rating extends external_api {
 
         $stats = rating_manager::get_stats((int) $cm->instance);
         $userrating = rating_manager::get_user_rating((int) $cm->instance);
+        $maxstars = rating_manager::get_max_stars((int) $cm->instance);
         $name = format_string($cm->name, true, ['context' => $context]);
 
         return [
             'userrating' => $userrating,
+            'maxstars' => $maxstars,
             'average' => $stats->average,
             'count' => $stats->count,
-            'statustext' => rating_manager::get_status_text($name, $userrating),
-            'averagetext' => rating_manager::get_average_text($stats),
+            'statustext' => rating_manager::get_status_text($name, $userrating, $maxstars),
+            'averagetext' => rating_manager::get_average_text($stats, $maxstars),
             'canrate' => rating_manager::can_rate($context),
         ];
     }
@@ -79,6 +81,7 @@ class get_rating extends external_api {
     public static function execute_returns(): external_single_structure {
         return new external_single_structure([
             'userrating' => new external_value(PARAM_INT, 'Stars the current user gave, 0 when not rated'),
+            'maxstars' => new external_value(PARAM_INT, 'Length of the rating scale of the activity'),
             'average' => new external_value(PARAM_FLOAT, 'Average of all ratings for the activity'),
             'count' => new external_value(PARAM_INT, 'Number of ratings the average is based on'),
             'statustext' => new external_value(PARAM_TEXT, 'The rating of the user in words'),

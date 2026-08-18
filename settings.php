@@ -24,7 +24,17 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+use mod_starrating\local\rating_manager;
+
 if ($ADMIN->fulltree) {
+    $settings->add(new admin_setting_configselect(
+        'mod_starrating/maxstars',
+        get_string('maxstars', 'mod_starrating'),
+        get_string('maxstars_desc', 'mod_starrating'),
+        rating_manager::DEFAULT_MAX_STARS,
+        rating_manager::get_max_stars_options()
+    ));
+
     $settings->add(new admin_setting_configcheckbox(
         'mod_starrating/showaverage',
         get_string('showaverage', 'mod_starrating'),

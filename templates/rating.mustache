@@ -17,7 +17,8 @@
 {{!
     @template mod_starrating/rating
 
-    The five stars of a star rating activity, on the web.
+    The stars of a star rating activity, on the web. How many there are is a per
+    activity setting, two to ten, so the template never assumes five.
 
     Rendered inline on the course page the way a label renders its text, and
     again on the activity page. Every star is a real link, so rating works
@@ -32,6 +33,7 @@
     * name string Name of the activity, which is the criterion
     * showname bool Whether to show the name above the stars
     * userrating int Stars the current user gave, 0 when not rated
+    * maxstars int Length of the rating scale
     * count int Number of ratings
     * average float Average rating
     * canrate bool Whether the current user may rate
@@ -51,6 +53,7 @@
         "name": "Teaching quality",
         "showname": true,
         "userrating": 3,
+        "maxstars": 5,
         "count": 12,
         "average": 3.8,
         "canrate": true,
@@ -72,7 +75,7 @@
     }
 }}
 <div class="starrating-activity" data-cmid="{{cmid}}" data-userrating="{{userrating}}"
-    data-count="{{count}}" data-average="{{average}}">
+    data-maxstars="{{maxstars}}" data-count="{{count}}" data-average="{{average}}">
     {{#showname}}
         <span class="starrating-name">{{name}}</span>
     {{/showname}}

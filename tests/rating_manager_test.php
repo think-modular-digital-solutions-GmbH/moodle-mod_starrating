@@ -30,16 +30,34 @@ use mod_starrating\local\rating_manager;
 final class rating_manager_test extends \advanced_testcase {
 
     /**
+     * Drop the request level caches of the manager.
+     *
+     * They are keyed on instance id, and PHPUnit resets the sequences between
+     * tests, so without this a later test can read the figures of an earlier one.
+     *
+     * @return void
+     */
+    protected function setUp(): void {
+        parent::setUp();
+
+        rating_manager::reset_caches();
+    }
+
+    /**
      * Create a course with one star rating activity.
      *
+     * @param int|null $maxstars Length of the rating scale, null for the default.
      * @return array The course, the instance and its context.
      */
-    protected function create_activity(): array {
+    protected function create_activity(?int $maxstars = null): array {
         $course = $this->getDataGenerator()->create_course();
-        $instance = $this->getDataGenerator()->create_module('starrating', [
-            'course' => $course->id,
-            'name' => 'Teaching quality',
-        ]);
+        $record = ['course' => $course->id, 'name' => 'Teaching quality'];
+
+        if ($maxstars !== null) {
+            $record['maxstars'] = $maxstars;
+        }
+
+        $instance = $this->getDataGenerator()->create_module('starrating', $record);
         $context = context_module::instance($instance->cmid);
 
         return [$course, $instance, $context];
@@ -103,6 +121,75 @@ final class rating_manager_test extends \advanced_testcase {
 
         $this->expectException(\moodle_exception::class);
         rating_manager::set_rating($context, $instance->id, 6);
+    }
+
+    /**
+     * What counts as out of range follows the scale of the activity.
+     *
+     * @return void
+     */
+    public function test_set_rating_follows_the_scale_of_the_activity(): void {
+        $this->resetAfterTest();
+
+        [$course, $instance, $context] = $this->create_activity(10);
+        $user = $this->getDataGenerator()->create_and_enrol($course, 'student');
+        $this->setUser($user);
+
+        // Nine stars are out of range on a scale of five and fine on a scale of ten.
+        rating_manager::set_rating($context, $instance->id, 9);
+        $this->assertSame(9, rating_manager::get_user_rating($instance->id));
+
+        $this->expectException(\moodle_exception::class);
+        rating_manager::set_rating($context, $instance->id, 11);
+    }
+
+    /**
+     * The scale of an activity is read back as it was configured.
+     *
+     * @return void
+     */
+    public function test_get_max_stars(): void {
+        $this->resetAfterTest();
+
+        [, $five] = $this->create_activity();
+        [, $seven] = $this->create_activity(7);
+
+        $this->assertSame(rating_manager::DEFAULT_MAX_STARS, rating_manager::get_max_stars($five->id));
+        $this->assertSame(7, rating_manager::get_max_stars($seven->id));
+    }
+
+    /**
+     * A scale length that this plugin does not support falls back to the default.
+     *
+     * @return void
+     */
+    public function test_normalise_max_stars(): void {
+        $this->assertSame(2, rating_manager::normalise_max_stars(2));
+        $this->assertSame(10, rating_manager::normalise_max_stars(10));
+        $this->assertSame(rating_manager::DEFAULT_MAX_STARS, rating_manager::normalise_max_stars(1));
+        $this->assertSame(rating_manager::DEFAULT_MAX_STARS, rating_manager::normalise_max_stars(11));
+        $this->assertSame(rating_manager::DEFAULT_MAX_STARS, rating_manager::normalise_max_stars(0));
+        $this->assertSame(rating_manager::DEFAULT_MAX_STARS, rating_manager::normalise_max_stars(null));
+    }
+
+    /**
+     * The highest rating given is what limits shortening the scale.
+     *
+     * @return void
+     */
+    public function test_get_highest_rating(): void {
+        $this->resetAfterTest();
+
+        [$course, $instance, $context] = $this->create_activity(10);
+        $this->assertSame(0, rating_manager::get_highest_rating($instance->id));
+
+        foreach ([3, 8, 5] as $rating) {
+            $user = $this->getDataGenerator()->create_and_enrol($course, 'student');
+            $this->setUser($user);
+            rating_manager::set_rating($context, $instance->id, $rating);
+        }
+
+        $this->assertSame(8, rating_manager::get_highest_rating($instance->id));
     }
 
     /**

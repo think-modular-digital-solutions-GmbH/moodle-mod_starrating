@@ -26,6 +26,8 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot . '/course/moodleform_mod.php');
 
+use mod_starrating\local\rating_manager;
+
 /**
  * The form shown when adding or editing a star rating.
  *
@@ -56,6 +58,12 @@ class mod_starrating_mod_form extends moodleform_mod {
 
         $mform->addElement('header', 'starratingdisplay', get_string('displaysettings', 'mod_starrating'));
 
+        $mform->addElement('select', 'maxstars', get_string('maxstars', 'mod_starrating'),
+            rating_manager::get_max_stars_options());
+        $mform->setType('maxstars', PARAM_INT);
+        $mform->addHelpButton('maxstars', 'maxstars', 'mod_starrating');
+        $mform->setDefault('maxstars', rating_manager::get_default_max_stars());
+
         $mform->addElement('advcheckbox', 'showaverage', get_string('showaverage', 'mod_starrating'));
         $mform->addHelpButton('showaverage', 'showaverage', 'mod_starrating');
         $mform->setDefault('showaverage', get_config('mod_starrating', 'showaverage'));
@@ -66,5 +74,33 @@ class mod_starrating_mod_form extends moodleform_mod {
 
         $this->standard_coursemodule_elements();
         $this->add_action_buttons();
+    }
+
+    /**
+     * Check the submitted data.
+     *
+     * Shortening the scale of an activity people have already rated would leave
+     * ratings above the new maximum, which no display could show honestly, so
+     * the scale can only be shortened down to the highest rating given.
+     *
+     * @param array $data Submitted data.
+     * @param array $files Submitted files.
+     * @return array Errors, keyed by element name.
+     */
+    public function validation($data, $files) {
+        $errors = parent::validation($data, $files);
+
+        $instanceid = (int) ($this->_instance ?? 0);
+        $maxstars = rating_manager::normalise_max_stars($data['maxstars'] ?? 0);
+
+        if ($instanceid) {
+            $highest = rating_manager::get_highest_rating($instanceid);
+
+            if ($highest > $maxstars) {
+                $errors['maxstars'] = get_string('maxstarstoolow', 'mod_starrating', $highest);
+            }
+        }
+
+        return $errors;
     }
 }

@@ -46,6 +46,48 @@ class report {
                           JOIN {course} c ON c.id = s.course';
 
     /**
+     * The average as a fraction of the scale, together with the scale itself.
+     *
+     * Every activity has its own number of stars, so a plain AVG(rating) over
+     * several activities would add three out of five to three out of ten. The
+     * average is therefore always computed as a fraction of the scale, which
+     * for a single scale is the same figure expressed differently, and the
+     * shortest and longest scale in the group come along so that a caller can
+     * tell whether the group has one scale at all.
+     *
+     * The multiplication by 1.0000 is what keeps the division out of integer
+     * arithmetic, with enough decimal places left for the fraction to survive
+     * being multiplied back into stars.
+     *
+     * @return string The select list, without a leading comma.
+     */
+    protected static function average_select(): string {
+        return 'COUNT(r.id) AS numratings,
+                AVG(r.rating * 1.0000 / s.maxstars) AS avgfraction,
+                MIN(s.maxstars) AS minmaxstars,
+                MAX(s.maxstars) AS maxmaxstars';
+    }
+
+    /**
+     * Turn the aggregate columns of one row into count, scale and average.
+     *
+     * @param stdClass $record A record selected with average_select().
+     * @return array The count, the shared scale length or 0 when the group mixes
+     *               scales, the average in stars on that scale, and the average
+     *               as a fraction of the scale.
+     */
+    protected static function read_average(stdClass $record): array {
+        $count = (int) ($record->numratings ?? 0);
+        $fraction = $count ? (float) $record->avgfraction : 0.0;
+
+        $minmax = (int) ($record->minmaxstars ?? 0);
+        $maxmax = (int) ($record->maxmaxstars ?? 0);
+        $maxstars = ($count && $minmax === $maxmax) ? $minmax : 0;
+
+        return [$count, $maxstars, round($fraction * $maxstars, 2), round($fraction, 4)];
+    }
+
+    /**
      * The grouping options offered by the report.
      *
      * @return array Grouping key to human readable label.
@@ -97,7 +139,8 @@ class report {
      * @param int $courseid Restrict to this course, 0 for all courses.
      * @param string $activity Restrict to this activity name, empty for all.
      * @param string $groupby One of the GROUP_* constants.
-     * @return stdClass[] Rows with courseid, coursename, criterion, numratings and avgrating.
+     * @return stdClass[] Rows with courseid, coursename, criterion, numratings, maxstars,
+     *                     avgrating and avgfraction.
      */
     public static function get_summary(int $courseid, string $activity, string $groupby): array {
         global $DB;
@@ -106,7 +149,7 @@ class report {
 
         switch (self::validate_groupby($groupby)) {
             case self::GROUP_CRITERION:
-                $sql = 'SELECT s.name, COUNT(r.id) AS numratings, AVG(r.rating) AS avgrating
+                $sql = 'SELECT s.name, ' . self::average_select() . '
                           FROM ' . self::FROM . '
                          WHERE ' . $where . '
                       GROUP BY s.name
@@ -114,7 +157,7 @@ class report {
                 break;
 
             case self::GROUP_COURSE:
-                $sql = 'SELECT s.course, c.fullname, COUNT(r.id) AS numratings, AVG(r.rating) AS avgrating
+                $sql = 'SELECT s.course, c.fullname, ' . self::average_select() . '
                           FROM ' . self::FROM . '
                          WHERE ' . $where . '
                       GROUP BY s.course, c.fullname
@@ -122,7 +165,7 @@ class report {
                 break;
 
             default:
-                $sql = 'SELECT s.course, c.fullname, s.name, COUNT(r.id) AS numratings, AVG(r.rating) AS avgrating
+                $sql = 'SELECT s.course, c.fullname, s.name, ' . self::average_select() . '
                           FROM ' . self::FROM . '
                          WHERE ' . $where . '
                       GROUP BY s.course, c.fullname, s.name
@@ -139,8 +182,7 @@ class report {
                 ? format_string($record->fullname, true, ['context' => context_course::instance($row->courseid)])
                 : null;
             $row->criterion = $record->name ?? null;
-            $row->numratings = (int) $record->numratings;
-            $row->avgrating = round((float) $record->avgrating, 2);
+            [$row->numratings, $row->maxstars, $row->avgrating, $row->avgfraction] = self::read_average($record);
             $rows[] = $row;
         }
         $recordset->close();
@@ -153,21 +195,21 @@ class report {
      *
      * @param int $courseid Restrict to this course, 0 for all courses.
      * @param string $activity Restrict to this activity name, empty for all.
-     * @return stdClass Object with the int property count and the float property average.
+     * @return stdClass Object with count, maxstars, average and fraction, as described
+     *                  by read_average().
      */
     public static function get_overall(int $courseid, string $activity): stdClass {
         global $DB;
 
         [$where, $params] = self::get_filter_sql($courseid, $activity);
 
-        $sql = 'SELECT COUNT(r.id) AS numratings, AVG(r.rating) AS avgrating
+        $sql = 'SELECT ' . self::average_select() . '
                   FROM ' . self::FROM . '
                  WHERE ' . $where;
         $record = $DB->get_record_sql($sql, $params);
 
         $overall = new stdClass();
-        $overall->count = (int) ($record->numratings ?? 0);
-        $overall->average = $overall->count ? round((float) $record->avgrating, 2) : 0.0;
+        [$overall->count, $overall->maxstars, $overall->average, $overall->fraction] = self::read_average($record);
 
         return $overall;
     }
@@ -198,12 +240,21 @@ class report {
     /**
      * Activity names in use, for the activity filter.
      *
+     * @param int $courseid Restrict to the activities of this course, 0 for the whole site.
      * @return array Name to name, prefixed by an "all activities" entry.
      */
-    public static function get_activity_options(): array {
+    public static function get_activity_options(int $courseid = 0): array {
         global $DB;
 
-        $names = $DB->get_fieldset_sql('SELECT DISTINCT name FROM {starrating} ORDER BY name');
+        $sql = 'SELECT DISTINCT name FROM {starrating}';
+        $params = [];
+
+        if ($courseid > 0) {
+            $sql .= ' WHERE course = :courseid';
+            $params['courseid'] = $courseid;
+        }
+
+        $names = $DB->get_fieldset_sql($sql . ' ORDER BY name', $params);
 
         $options = ['' => get_string('allactivities', 'mod_starrating')];
         foreach ($names as $name) {
@@ -211,5 +262,61 @@ class report {
         }
 
         return $options;
+    }
+
+    /**
+     * One row per star rating activity of a course, for the course report.
+     *
+     * Unlike the site wide report this groups by activity rather than by
+     * activity name, because one course can hold two activities with the same
+     * name, and it lists activities nobody has rated yet, which is exactly what
+     * a teacher waiting for feedback wants to see.
+     *
+     * @param int $courseid The course to report on.
+     * @param string $activity Restrict to this activity name, empty for all.
+     * @return stdClass[] Rows with instanceid, cmid, name, numratings, maxstars,
+     *                    avgrating and avgfraction.
+     */
+    public static function get_course_summary(int $courseid, string $activity = ''): array {
+        global $DB;
+
+        $params = ['courseid' => $courseid, 'modname' => 'starrating'];
+
+        // An activity that is being deleted is on its way out, not a result.
+        $where = 's.course = :courseid AND cm.deletioninprogress = 0';
+
+        if ($activity !== '') {
+            $where .= ' AND s.name = :activity';
+            $params['activity'] = $activity;
+        }
+
+        // A left join, so an activity without a single rating still gets a row.
+        $sql = 'SELECT s.id, s.name, s.maxstars, cm.id AS cmid,
+                       COUNT(r.id) AS numratings,
+                       AVG(r.rating * 1.0000 / s.maxstars) AS avgfraction
+                  FROM {starrating} s
+                  JOIN {modules} m ON m.name = :modname
+                  JOIN {course_modules} cm ON cm.instance = s.id AND cm.module = m.id
+             LEFT JOIN {' . rating_manager::TABLE . '} r ON r.starratingid = s.id AND r.rating > 0
+                 WHERE ' . $where . '
+              GROUP BY s.id, s.name, s.maxstars, cm.id
+              ORDER BY s.name, cm.id';
+
+        $rows = [];
+        $recordset = $DB->get_recordset_sql($sql, $params);
+        foreach ($recordset as $record) {
+            $row = new stdClass();
+            $row->instanceid = (int) $record->id;
+            $row->cmid = (int) $record->cmid;
+            $row->name = $record->name;
+            $row->maxstars = rating_manager::normalise_max_stars($record->maxstars);
+            $row->numratings = (int) $record->numratings;
+            $row->avgfraction = $row->numratings ? round((float) $record->avgfraction, 4) : 0.0;
+            $row->avgrating = round($row->avgfraction * $row->maxstars, 2);
+            $rows[] = $row;
+        }
+        $recordset->close();
+
+        return $rows;
     }
 }

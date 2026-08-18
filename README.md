@@ -1,16 +1,18 @@
 # mod_starrating — Star rating activity for Moodle
 
-An activity that puts five stars **directly on the course page**, the way a
+An activity that puts a row of stars **directly on the course page**, the way a
 label puts its text there. Everyone with the right permission gives one rating
-and can change or withdraw it later.
+and can change or withdraw it later. How many stars there are is set per
+activity, anything from 2 to 10.
 
 **The name of the activity is what is being rated.** Add one activity per thing
 you want feedback on — "Teaching quality", "Materials", "Pace of the course" —
 and the name is what people see next to the stars. There is no token to write
 and nothing to configure per criterion.
 
-A site wide report shows every rating, filterable by course and activity, with
-averages per course and per activity.
+Teachers get a report for their own course; a site wide report shows every
+rating, filterable by course and activity, with averages per course and per
+activity.
 
 ## Requirements
 
@@ -38,16 +40,37 @@ the Moodle app opens.
 
 | Setting | Default | Effect |
 | :--- | :--- | :--- |
+| Number of stars | 5 | How many stars people choose from, 2 to 10 |
 | Show the average | on | Shows the average and the number of ratings next to the stars |
 | Allow withdrawing a rating | on | Shows a link that removes the rating the user gave |
 
-Both defaults for new activities are set under *Site administration → Plugins →
-Activity modules → Star rating*.
+All three defaults for new activities are set under *Site administration →
+Plugins → Activity modules → Star rating*.
+
+The scale of an activity that has already been rated can be lengthened at any
+time. It can be shortened only down to the highest rating anybody has given: a
+rating of eight has nowhere to go on a scale of five, so the form refuses it
+rather than hide or truncate what people said.
 
 Users need `mod/starrating:rate`, which students, teachers and managers have by
 default. Guests and users without it see the stars as a read only display.
 
 ## The reports
+
+### For teachers
+
+*Star ratings* in the course menu, and in the menu of every star rating
+activity, behind `mod/starrating:viewcoursereport` — teachers, editing teachers
+and managers by default. It covers one course:
+
+- the average per activity, including the activities nobody has rated yet, which
+  is what tells a teacher that feedback is still outstanding rather than bad;
+- every individual rating with the person who gave it, sortable, paged and
+  downloadable.
+
+Opened from an activity it arrives filtered to that activity.
+
+### For administrators
 
 Two pages under *Site administration → Reports*, both behind
 `mod/starrating:viewreports` (managers by default), each carrying the filter
@@ -59,8 +82,15 @@ over to the other:
 - **Star ratings by user** — every individual rating with the person who gave
   it, sortable, paged and downloadable in the usual Moodle formats.
 
-The second page names users, which is why the capability carries
-`RISK_PERSONAL` and is not granted to teachers by default.
+Both capabilities name users, which is why they carry `RISK_PERSONAL`.
+`mod/starrating:viewreports` reaches every course on the site, which is why it
+is not granted to teachers.
+
+Because every activity has its own scale, an average taken over activities whose
+scales differ in length is reported as a share of the scale — "Average 76% of the
+scale from 12 ratings" — instead of as stars. Four of five and eight of ten are
+the same judgement, and there is no row of stars that can honestly stand for
+both.
 
 ## Moodle app
 
@@ -71,8 +101,9 @@ inside the app. No browser, and no second login.
 
 - On the course page the stars are rendered inline through `coursepagemethod`,
   showing the current rating and the average. The app renders that through
-  `core-format-text`, which cannot run app directives, so the stars there are a
-  link into the activity.
+  `core-format-text`, where no app directive can run, so `mobile/init.js` handles
+  the tap instead: one tap saves the rating and repaints the stars in place,
+  without opening anything.
 - On the activity page the stars carry the app's own
   `core-site-plugins-call-ws` directive:
 
@@ -81,11 +112,10 @@ inside the app. No browser, and no second login.
      [params]="{cmid: 12, rating: 3}" refreshOnSuccess="true">
   ```
 
-  Tapping a star calls the web service and refreshes the page. **The plugin
-  ships no JavaScript to the app.**
+  Tapping a star calls the web service and refreshes the page.
 
-So the app is: tap the stars on the course page, the activity opens in the app,
-rate with one tap. On the web it stays a single click on the course page.
+So in the app rating is one tap on the course page, the same as one click on the
+web, and the activity page is there for anyone who opens it.
 
 ### After installing
 
@@ -142,8 +172,9 @@ Built against WCAG 2.2 AA:
 
 - Every star is a real link, keyboard reachable and operable, with a visible
   focus outline.
-- The five stars form a labelled group, and each link has an accessible name
-  saying what it will do ("Rate Teaching quality with 3 of 5 stars").
+- The stars form a labelled group, and each link has an accessible name saying
+  what it will do ("Rate Teaching quality with 3 of 5 stars"), naming the scale
+  of that activity.
 - A rated star is a filled icon, an unrated one an outline, so the rating is
   carried by shape and not by colour. It is repeated as visually hidden text.
   The star colours reach at least 3:1 against a white background.

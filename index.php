@@ -55,6 +55,7 @@ $modinfo = get_fast_modinfo($course);
 $table = new html_table();
 $table->head = [
     get_string('colcriterion', 'mod_starrating'),
+    get_string('colscale', 'mod_starrating'),
     get_string('colratings', 'mod_starrating'),
     get_string('colaverage', 'mod_starrating'),
 ];
@@ -67,14 +68,16 @@ foreach ($instances as $instance) {
     }
 
     $stats = rating_manager::get_stats((int) $instance->id);
+    $maxstars = rating_manager::normalise_max_stars($instance->maxstars ?? 0);
 
     $table->data[] = [
         html_writer::link(
             new moodle_url('/mod/starrating/view.php', ['id' => $cm->id]),
             format_string($instance->name)
         ),
+        $maxstars,
         $stats->count,
-        $renderer->static_stars($stats->average, $stats->count),
+        $renderer->static_stars($stats->average, $stats->count, $maxstars),
     ];
 }
 

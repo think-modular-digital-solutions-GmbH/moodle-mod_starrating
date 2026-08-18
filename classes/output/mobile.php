@@ -84,15 +84,16 @@ class mobile {
         $userrating = rating_manager::get_user_rating((int) $cm->instance);
         $stats = rating_manager::get_stats((int) $cm->instance);
         $canrate = rating_manager::can_rate($context);
+        $maxstars = rating_manager::normalise_max_stars($instance->maxstars);
 
         $stars = [];
-        for ($value = 1; $value <= rating_manager::MAX_STARS; $value++) {
+        for ($value = 1; $value <= $maxstars; $value++) {
             $stars[] = [
                 'on' => $value <= $userrating,
                 'params' => self::build_params((int) $cm->id, $value),
                 'label' => get_string('ratestars', 'mod_starrating', (object) [
                     'stars' => $value,
-                    'max' => rating_manager::MAX_STARS,
+                    'max' => $maxstars,
                     'criterion' => $name,
                 ]),
             ];
@@ -104,9 +105,9 @@ class mobile {
             'hasintro' => (bool) trim(strip_tags($instance->intro ?? '')),
             'stars' => $stars,
             'canrate' => $canrate,
-            'statustext' => rating_manager::get_status_text($name, $userrating),
+            'statustext' => rating_manager::get_status_text($name, $userrating, $maxstars),
             'showaverage' => !empty($instance->showaverage),
-            'averagetext' => rating_manager::get_average_text($stats),
+            'averagetext' => rating_manager::get_average_text($stats, $maxstars),
             'canclear' => $canrate && !empty($instance->allowclear) && $userrating > 0,
             'clearparams' => self::build_params((int) $cm->id, 0),
             'cleartext' => get_string('clearrating', 'mod_starrating'),
@@ -145,15 +146,18 @@ class mobile {
         $stats = rating_manager::get_stats((int) $cm->instance);
         $customdata = (array) get_fast_modinfo($course)->get_cm($cm->id)->customdata;
         $canrate = rating_manager::can_rate($context);
+        $maxstars = isset($customdata['maxstars'])
+            ? rating_manager::normalise_max_stars($customdata['maxstars'])
+            : rating_manager::get_max_stars((int) $cm->instance);
 
         $stars = [];
-        for ($value = 1; $value <= rating_manager::MAX_STARS; $value++) {
+        for ($value = 1; $value <= $maxstars; $value++) {
             $stars[] = [
                 'value' => $value,
                 'on' => $value <= $userrating,
                 'label' => get_string('ratestars', 'mod_starrating', (object) [
                     'stars' => $value,
-                    'max' => rating_manager::MAX_STARS,
+                    'max' => $maxstars,
                     'criterion' => $name,
                 ]),
             ];
@@ -165,9 +169,9 @@ class mobile {
             'courseid' => $course->id,
             'stars' => $stars,
             'canrate' => $canrate,
-            'statustext' => rating_manager::get_status_text($name, $userrating),
+            'statustext' => rating_manager::get_status_text($name, $userrating, $maxstars),
             'showaverage' => !empty($customdata['showaverage']),
-            'averagetext' => rating_manager::get_average_text($stats),
+            'averagetext' => rating_manager::get_average_text($stats, $maxstars),
         ]);
 
         return [

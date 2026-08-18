@@ -16,7 +16,6 @@
 
 namespace mod_starrating\output;
 
-use mod_starrating\local\rating_manager;
 use mod_starrating\local\report;
 use html_table;
 use html_writer;
@@ -34,7 +33,7 @@ use stdClass;
 class renderer extends plugin_renderer_base {
 
     /**
-     * Render the interactive five star widget.
+     * Render the interactive star widget.
      *
      * @param rating_widget $widget Widget to render.
      * @return string HTML.
@@ -46,17 +45,18 @@ class renderer extends plugin_renderer_base {
     /**
      * Render a read only star display, used for the averages in the report.
      *
-     * @param float $average Average rating.
+     * @param float $average Average rating, in stars on the given scale.
      * @param int $count Number of ratings the average is based on.
+     * @param int $maxstars Length of the rating scale.
      * @return string HTML.
      */
-    public function static_stars(float $average, int $count): string {
+    public function static_stars(float $average, int $count, int $maxstars): string {
         if ($count === 0) {
             return get_string('noratingsyet', 'mod_starrating');
         }
 
         $stars = [];
-        for ($value = 1; $value <= rating_manager::MAX_STARS; $value++) {
+        for ($value = 1; $value <= $maxstars; $value++) {
             $stars[] = ['on' => $value <= (int) round($average)];
         }
 
@@ -64,9 +64,37 @@ class renderer extends plugin_renderer_base {
             'stars' => $stars,
             'label' => get_string('averagetext', 'mod_starrating', (object) [
                 'average' => format_float($average, 1),
-                'max' => rating_manager::MAX_STARS,
+                'max' => $maxstars,
                 'count' => $count,
             ]),
+        ]);
+    }
+
+    /**
+     * The average of a group of ratings, however long the scales in it are.
+     *
+     * Averaging over activities with scales of different lengths cannot be shown
+     * as stars, because there is no scale to draw them on. Such a group is
+     * reported as a share of the scale instead, and says so.
+     *
+     * @param int $count Number of ratings.
+     * @param int $maxstars Shared scale length, 0 when the group mixes scales.
+     * @param float $average Average in stars, only meaningful when $maxstars is set.
+     * @param float $fraction Average as a fraction of the scale, 0 to 1.
+     * @return string HTML.
+     */
+    public function average_cell(int $count, int $maxstars, float $average, float $fraction): string {
+        if ($count === 0) {
+            return get_string('noratingsyet', 'mod_starrating');
+        }
+
+        if ($maxstars > 0) {
+            return $this->static_stars($average, $count, $maxstars);
+        }
+
+        return get_string('averagemixed', 'mod_starrating', (object) [
+            'percent' => format_float($fraction * 100, 1),
+            'count' => $count,
         ]);
     }
 
@@ -101,6 +129,41 @@ class renderer extends plugin_renderer_base {
         ]), 'form-group mb-2');
 
         $fieldset = html_writer::tag('legend', get_string('filterheading', 'mod_starrating'), ['class' => 'h5']);
+        $fieldset .= html_writer::div($controls, 'd-flex flex-wrap align-items-end');
+
+        return html_writer::tag('form', html_writer::tag('fieldset', $fieldset), [
+            'method' => 'get',
+            'action' => $actionurl->out_omit_querystring(),
+            'class' => 'starrating-report-filter mb-4',
+        ]);
+    }
+
+    /**
+     * The activity selector above the course report.
+     *
+     * The course is fixed here, so it travels as a hidden field rather than as a
+     * select, and the report stays on the course it was opened for.
+     *
+     * @param moodle_url $actionurl The course report URL.
+     * @param array $criterionoptions Activity name to activity name.
+     * @param int $courseid The course being reported on.
+     * @param string $criterion Selected activity name, empty for all.
+     * @return string HTML.
+     */
+    public function course_report_filter(moodle_url $actionurl, array $criterionoptions,
+            int $courseid, string $criterion): string {
+
+        $controls = $this->filter_control('activity', get_string('filteractivity', 'mod_starrating'),
+            $criterionoptions, $criterion);
+
+        $controls .= html_writer::div(html_writer::empty_tag('input', [
+            'type' => 'submit',
+            'class' => 'btn btn-primary',
+            'value' => get_string('applyfilter', 'mod_starrating'),
+        ]), 'form-group mb-2');
+
+        $fieldset = html_writer::tag('legend', get_string('filterheading', 'mod_starrating'), ['class' => 'h5']);
+        $fieldset .= html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'id', 'value' => $courseid]);
         $fieldset .= html_writer::div($controls, 'd-flex flex-wrap align-items-end');
 
         return html_writer::tag('form', html_writer::tag('fieldset', $fieldset), [
@@ -172,7 +235,7 @@ class renderer extends plugin_renderer_base {
                 $cells[] = s($row->criterion);
             }
             $cells[] = $row->numratings;
-            $cells[] = $this->static_stars($row->avgrating, $row->numratings);
+            $cells[] = $this->average_cell($row->numratings, $row->maxstars, $row->avgrating, $row->avgfraction);
             $table->data[] = $cells;
         }
 
@@ -184,9 +247,49 @@ class renderer extends plugin_renderer_base {
         $overallrow->cells = [
             $label,
             new \html_table_cell((string) $overall->count),
-            new \html_table_cell($this->static_stars($overall->average, $overall->count)),
+            new \html_table_cell($this->average_cell(
+                $overall->count, $overall->maxstars, $overall->average, $overall->fraction)),
         ];
         $table->data[] = $overallrow;
+
+        return html_writer::table($table);
+    }
+
+    /**
+     * The averages of every star rating in one course, for its teachers.
+     *
+     * One row per activity, including the ones nobody has rated yet, because an
+     * activity that is waiting for its first rating is a result too.
+     *
+     * @param stdClass[] $rows Rows returned by report::get_course_summary().
+     * @return string HTML.
+     */
+    public function course_summary_table(array $rows): string {
+        if (empty($rows)) {
+            return $this->notification(get_string('noresults', 'mod_starrating'), 'info');
+        }
+
+        $table = new html_table();
+        $table->caption = get_string('coursesummarycaption', 'mod_starrating');
+        $table->attributes['class'] = 'generaltable';
+        $table->head = [
+            get_string('colcriterion', 'mod_starrating'),
+            get_string('colscale', 'mod_starrating'),
+            get_string('colratings', 'mod_starrating'),
+            get_string('colaverage', 'mod_starrating'),
+        ];
+
+        foreach ($rows as $row) {
+            $table->data[] = [
+                html_writer::link(
+                    new moodle_url('/mod/starrating/view.php', ['id' => $row->cmid]),
+                    format_string($row->name)
+                ),
+                $row->maxstars,
+                $row->numratings,
+                $this->average_cell($row->numratings, $row->maxstars, $row->avgrating, $row->avgfraction),
+            ];
+        }
 
         return html_writer::table($table);
     }

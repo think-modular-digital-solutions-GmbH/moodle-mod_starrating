@@ -73,6 +73,7 @@ function starrating_add_instance($data, $mform = null) {
 
     $data->timecreated = time();
     $data->timemodified = $data->timecreated;
+    $data->maxstars = rating_manager::normalise_max_stars($data->maxstars ?? 0);
 
     return $DB->insert_record('starrating', $data);
 }
@@ -89,6 +90,7 @@ function starrating_update_instance($data, $mform = null) {
 
     $data->id = $data->instance;
     $data->timemodified = time();
+    $data->maxstars = rating_manager::normalise_max_stars($data->maxstars ?? 0);
 
     return $DB->update_record('starrating', $data);
 }
@@ -124,7 +126,7 @@ function starrating_delete_instance($id) {
 function starrating_get_coursemodule_info($coursemodule) {
     global $DB;
 
-    $fields = 'id, name, intro, introformat, showaverage, allowclear';
+    $fields = 'id, name, intro, introformat, maxstars, showaverage, allowclear';
     $instance = $DB->get_record('starrating', ['id' => $coursemodule->instance], $fields);
     if (!$instance) {
         return false;
@@ -138,6 +140,7 @@ function starrating_get_coursemodule_info($coursemodule) {
     }
 
     $info->customdata = [
+        'maxstars' => rating_manager::normalise_max_stars($instance->maxstars),
         'showaverage' => (int) $instance->showaverage,
         'allowclear' => (int) $instance->allowclear,
     ];
@@ -227,8 +230,65 @@ function starrating_user_outline($course, $user, $mod, $instance) {
     $result = new stdClass();
     $result->info = get_string('starsofmax', 'mod_starrating', (object) [
         'stars' => $rating,
-        'max' => rating_manager::MAX_STARS,
+        'max' => rating_manager::normalise_max_stars($instance->maxstars ?? 0),
     ]);
 
     return $result;
+}
+
+/**
+ * Add the course rating report to the course navigation.
+ *
+ * The site wide report is for administrators. Teachers get the same figures for
+ * their own course, which is what this link leads to.
+ *
+ * @param navigation_node $navigation The course node.
+ * @param stdClass $course The course.
+ * @param context_course $context The course context.
+ * @return void
+ */
+function starrating_extend_navigation_course($navigation, $course, $context) {
+    if (!has_capability('mod/starrating:viewcoursereport', $context)) {
+        return;
+    }
+
+    // Nothing to report on in a course without a single star rating.
+    if (!get_fast_modinfo($course)->get_instances_of('starrating')) {
+        return;
+    }
+
+    $navigation->add(
+        get_string('coursereport', 'mod_starrating'),
+        new moodle_url('/mod/starrating/coursereport.php', ['id' => $course->id]),
+        navigation_node::TYPE_SETTING,
+        null,
+        'starratingcoursereport',
+        new pix_icon('i/report', '')
+    );
+}
+
+/**
+ * Add the course rating report to the menu of one activity.
+ *
+ * @param settings_navigation $settings The settings navigation.
+ * @param navigation_node $node The activity node.
+ * @return void
+ */
+function starrating_extend_settings_navigation($settings, $node) {
+    global $PAGE;
+
+    $cm = $PAGE->cm;
+    if (!$cm || !has_capability('mod/starrating:viewcoursereport', context_course::instance($cm->course))) {
+        return;
+    }
+
+    // Prefiltered to this activity, since that is what the teacher is looking at.
+    $node->add_node(navigation_node::create(
+        get_string('coursereport', 'mod_starrating'),
+        new moodle_url('/mod/starrating/coursereport.php', ['id' => $cm->course, 'activity' => $cm->name]),
+        navigation_node::TYPE_SETTING,
+        null,
+        'starratingcoursereport',
+        new pix_icon('i/report', '')
+    ));
 }
