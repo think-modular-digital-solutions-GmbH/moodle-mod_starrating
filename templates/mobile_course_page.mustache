@@ -25,6 +25,9 @@
     opening the activity. Without that script they are a display only, which is
     also what people who may not rate get.
 
+    The activity name has to be printed here: the app replaces the module title
+    with this content, so nothing else would show what is being rated.
+
     The data attributes are the contract with mobile/init.js.
 
     Context variables required for this template:
@@ -57,6 +60,7 @@
 }}
 <div class="starrating-activity starrating-app-coursepage" data-cmid="{{cmid}}" data-courseid="{{courseid}}"
     data-canrate="{{#canrate}}1{{/canrate}}{{^canrate}}0{{/canrate}}">
+    <span class="starrating-name">{{name}}</span>
     <span class="filter-rating" role="group" aria-label="{{name}}">
         <span class="sr-only visually-hidden" data-region="status">{{statustext}}</span>
         <span class="filter-rating-stars">

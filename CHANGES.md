@@ -19,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- In the Moodle app the course page showed no activity name, a module icon that
+  said nothing, and the average crammed next to the stars. The name, the stars
+  and the average are now stacked and centred, and the icon is gone.
 - Rating in the Moodle app took two taps and went through the activity page,
   and the stars on the course page never updated afterwards. One tap on a star
   on the course page now saves the rating and repaints the stars on the spot,

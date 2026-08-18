@@ -93,6 +93,37 @@
     cursor: pointer;
 }
 
+/*
+ * On the app course page the whole card is ours, so the module icon is hidden
+ * and the name, the stars and the average are stacked and centred.
+ */
+.starrating-app-item core-mod-icon {
+    display: none;
+}
+
+.starrating-app-item .activity-title {
+    width: 100%;
+}
+
+.starrating-app-coursepage {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    width: 100%;
+    text-align: center;
+}
+
+.starrating-app-coursepage .filter-rating {
+    flex-direction: column;
+    align-items: center;
+    white-space: normal;
+}
+
+.starrating-app-coursepage .filter-rating-average {
+    margin-left: 0;
+}
+
 /* Averages in the report sit inside table cells. */
 .filter-rating-static {
     gap: 0.3rem;

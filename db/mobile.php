@@ -48,7 +48,9 @@ $addons = [
                 'init' => 'mobile_init',
                 'displaydata' => [
                     'icon' => $CFG->wwwroot . '/mod/starrating/pix/monologo.svg',
-                    'class' => '',
+                    // Scopes the styles that hide the app's module icon and
+                    // centre the stars on the course page.
+                    'class' => 'starrating-app-item',
                 ],
                 'styles' => [
                     'url' => $CFG->wwwroot . '/mod/starrating/styles.css',

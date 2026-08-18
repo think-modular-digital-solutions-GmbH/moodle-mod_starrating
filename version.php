@@ -25,7 +25,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'mod_starrating';
-$plugin->version   = 2026081802;
+$plugin->version   = 2026081803;
 $plugin->requires  = 2023100900; // Moodle 4.3.
 $plugin->maturity  = MATURITY_STABLE;
 $plugin->release   = '2.0.0';
