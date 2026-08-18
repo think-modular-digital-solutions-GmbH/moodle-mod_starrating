@@ -77,7 +77,6 @@ $string['privacy:metadata:starrating_rating:starratingid'] = 'The activity that 
 $string['privacy:metadata:starrating_rating:timecreated'] = 'The time the rating was first submitted.';
 $string['privacy:metadata:starrating_rating:timemodified'] = 'The time the rating was last changed.';
 $string['privacy:metadata:starrating_rating:userid'] = 'The user who submitted the rating.';
-$string['rateinapp'] = 'Rate {$a}';
 $string['ratestars'] = 'Rate {$a->criterion} with {$a->stars} of {$a->max} stars';
 $string['ratingcleared'] = 'Your rating was withdrawn.';
 $string['ratinggroup'] = 'Star rating for {$a}';

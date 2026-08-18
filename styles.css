@@ -83,9 +83,14 @@
  * In the app the stars are the control on the activity page, so they get a
  * touch target that clears the WCAG 2.2 target size minimum.
  */
-.filter-rating-app .filter-rating-star {
+.filter-rating-app .filter-rating-star,
+.starrating-app-coursepage .filter-rating-star[data-value] {
     padding: 0.35rem;
     font-size: 1.5em;
+}
+
+.starrating-app-coursepage .filter-rating-star[data-value] {
+    cursor: pointer;
 }
 
 /* Averages in the report sit inside table cells. */

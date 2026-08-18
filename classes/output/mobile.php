@@ -30,6 +30,37 @@ use moodle_url;
 class mobile {
 
     /**
+     * JavaScript the app runs once when it loads the site plugins.
+     *
+     * It is what makes a star on the course page tappable. Everything else in
+     * this plugin is declarative; the app simply offers no other way to react to
+     * a tap on course page content.
+     *
+     * @param array $args Arguments passed by the app, unused.
+     * @return array Content for the app.
+     */
+    public static function mobile_init(array $args): array {
+        global $CFG;
+
+        $path = $CFG->dirroot . '/mod/starrating/mobile/init.js';
+
+        // An unreadable file would hand the app an empty script and silently
+        // leave the course page stars dead, so say so instead.
+        if (!is_readable($path)) {
+            debugging("mod_starrating: {$path} is missing, the stars on the course page will not work in the app.",
+                DEBUG_DEVELOPER);
+
+            return ['templates' => [], 'javascript' => '', 'otherdata' => ''];
+        }
+
+        return [
+            'templates' => [],
+            'javascript' => file_get_contents($path),
+            'otherdata' => '',
+        ];
+    }
+
+    /**
      * The activity page in the app, where the rating is actually given.
      *
      * This is a site plugin template, so the stars can carry the app's
@@ -94,9 +125,8 @@ class mobile {
      * The stars as they appear inline on the course page in the app.
      *
      * The app renders this through core-format-text, which cannot run the
-     * call-ws directive, so the stars here link to the activity. The app
-     * recognises that link and opens the activity natively, where the rating is
-     * one tap away.
+     * call-ws directive, so these stars are plain markup and mobile/init.js
+     * gives them their behaviour: one tap saves and repaints, in place.
      *
      * @param array $args Arguments passed by the app, expects cmid.
      * @return array Content for the app.
@@ -114,22 +144,30 @@ class mobile {
         $userrating = rating_manager::get_user_rating((int) $cm->instance);
         $stats = rating_manager::get_stats((int) $cm->instance);
         $customdata = (array) get_fast_modinfo($course)->get_cm($cm->id)->customdata;
-        $url = (new moodle_url('/mod/starrating/view.php', ['id' => $cm->id]))->out(false);
+        $canrate = rating_manager::can_rate($context);
 
         $stars = [];
         for ($value = 1; $value <= rating_manager::MAX_STARS; $value++) {
-            $stars[] = ['on' => $value <= $userrating];
+            $stars[] = [
+                'value' => $value,
+                'on' => $value <= $userrating,
+                'label' => get_string('ratestars', 'mod_starrating', (object) [
+                    'stars' => $value,
+                    'max' => rating_manager::MAX_STARS,
+                    'criterion' => $name,
+                ]),
+            ];
         }
 
         $html = $OUTPUT->render_from_template('mod_starrating/mobile_course_page', [
             'name' => $name,
+            'cmid' => $cm->id,
+            'courseid' => $course->id,
             'stars' => $stars,
-            'url' => $url,
-            'canrate' => rating_manager::can_rate($context),
+            'canrate' => $canrate,
             'statustext' => rating_manager::get_status_text($name, $userrating),
             'showaverage' => !empty($customdata['showaverage']),
             'averagetext' => rating_manager::get_average_text($stats),
-            'ratelabel' => get_string('rateinapp', 'mod_starrating', $name),
         ]);
 
         return [

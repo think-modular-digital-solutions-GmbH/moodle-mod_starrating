@@ -77,7 +77,6 @@ $string['privacy:metadata:starrating_rating:starratingid'] = 'Die bewertete Akti
 $string['privacy:metadata:starrating_rating:timecreated'] = 'Der Zeitpunkt der ersten Abgabe der Bewertung.';
 $string['privacy:metadata:starrating_rating:timemodified'] = 'Der Zeitpunkt der letzten Änderung der Bewertung.';
 $string['privacy:metadata:starrating_rating:userid'] = 'Die Person, die die Bewertung abgegeben hat.';
-$string['rateinapp'] = '{$a} bewerten';
 $string['ratestars'] = '{$a->criterion} mit {$a->stars} von {$a->max} Sternen bewerten';
 $string['ratingcleared'] = 'Ihre Bewertung wurde zurückgezogen.';
 $string['ratinggroup'] = 'Sternebewertung für {$a}';

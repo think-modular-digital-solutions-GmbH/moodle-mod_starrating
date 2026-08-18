@@ -51,12 +51,20 @@ Target: Moodle 4.3 and later, developed against Moodle 4.5 LTS.
   `CoreContentLinksModuleIndexHandler` for site plugin modules
   (`siteplugins-init.ts`), so `/mod/starrating/view.php?id=X` opens natively in
   the app. Do not replace that link with anything else.
-- **The app ships no JavaScript.** The activity page template uses the app's
-  `core-site-plugins-call-ws` directive. `coursepagemethod` renders the inline
-  course page stars, but the app pipes that through `core-format-text`
-  (`module.handlerData.title` in `core-course-module.html`), so **no app
-  directive works there** — those stars are a link into the activity, nothing
-  more.
+- **The activity page is declarative, the course page needs JavaScript.** The
+  activity page template uses the app's `core-site-plugins-call-ws` directive.
+  The course page cannot: `coursepagemethod` output goes through
+  `core-format-text` (`module.handlerData.title` in `core-course-module.html`),
+  so no app directive runs there, `hascustomcmlistitem` has no consumer in app
+  5.2, and `updateModuleCourseContent()` is exposed only to plugin JS
+  (`plugin-content.ts`). Hence `mobile/init.js`, shipped by the `init` handler,
+  which handles the tap in the capture phase and repaints in place. The user
+  requires one tap on the course page, so **do not replace those stars with a
+  link to the activity** — that was tried and rejected.
+- **`mobile/init.js` and `templates/mobile_course_page.mustache` are a
+  contract.** The script keys off `.starrating-app-coursepage`,
+  `data-cmid`, `data-courseid`, `data-canrate` and `data-value`, and repaints by
+  swapping the `ion-icon` `src` between the solid and regular star assets.
 - **Per user content goes in `starrating_cm_info_view()`, never in
   `starrating_get_coursemodule_info()`.** The latter feeds the course cache,
   which is shared between users.

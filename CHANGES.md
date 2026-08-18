@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Rating in the Moodle app took two taps and went through the activity page,
+  and the stars on the course page never updated afterwards. One tap on a star
+  on the course page now saves the rating and repaints the stars on the spot,
+  without opening the activity.
 - The activity could not be opened at all, on the web or in the app, because it
   declared that it has no view link. That also stopped the Moodle app from
   rating: the app can only submit from the activity page, which it could never

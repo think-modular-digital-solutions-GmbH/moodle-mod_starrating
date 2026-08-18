@@ -24,7 +24,10 @@
  * be submitted declaratively through core-site-plugins-call-ws.
  *
  * coursepagemethod renders the stars inline on the course page, the way they
- * appear on the web.
+ * appear on the web. The app pipes that content through core-format-text, where
+ * its own directives cannot run, so the init handler ships the one thing that
+ * cannot be declared: the tap on a course page star, which saves the rating and
+ * repaints the stars without opening anything.
  *
  * @package    mod_starrating
  * @copyright  2026 Think Modular
@@ -42,6 +45,7 @@ $addons = [
                 'delegate' => 'CoreCourseModuleDelegate',
                 'method' => 'mobile_view_activity',
                 'coursepagemethod' => 'mobile_course_page',
+                'init' => 'mobile_init',
                 'displaydata' => [
                     'icon' => $CFG->wwwroot . '/mod/starrating/pix/monologo.svg',
                     'class' => '',
