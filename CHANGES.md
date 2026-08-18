@@ -19,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The rating web services validated the activity context only after building
+  course module information for the user, which can fail with a login error
+  instead of a clean permission error when called from the app.
 - Installation failed with `plugin_defective_exception`. An activity module's
   language file must be named after the module directory, not after the
   frankenstyle component, so it is now `lang/en/starrating.php`.

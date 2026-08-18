@@ -51,7 +51,9 @@ class get_rating extends external_api {
     public static function execute(int $cmid): array {
         $params = self::validate_parameters(self::execute_parameters(), ['cmid' => $cmid]);
 
-        [$course, $cm] = get_course_and_cm_from_cmid($params['cmid'], 'starrating');
+        // A plain lookup first: the context has to be validated before anything
+        // builds course module info for the user.
+        $cm = get_coursemodule_from_id('starrating', $params['cmid'], 0, false, MUST_EXIST);
         $context = \context_module::instance($cm->id);
         self::validate_context($context);
 

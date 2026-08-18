@@ -42,7 +42,8 @@ class mobile {
     public static function mobile_view_activity(array $args): array {
         global $OUTPUT, $DB;
 
-        [$course, $cm] = get_course_and_cm_from_cmid((int) ($args['cmid'] ?? 0), 'starrating');
+        $cm = get_coursemodule_from_id('starrating', (int) ($args['cmid'] ?? 0), 0, false, MUST_EXIST);
+        $course = get_course($cm->course);
         require_login($course, false, $cm);
 
         $context = context_module::instance($cm->id);
@@ -103,7 +104,8 @@ class mobile {
     public static function mobile_course_page(array $args): array {
         global $OUTPUT;
 
-        [$course, $cm] = get_course_and_cm_from_cmid((int) ($args['cmid'] ?? 0), 'starrating');
+        $cm = get_coursemodule_from_id('starrating', (int) ($args['cmid'] ?? 0), 0, false, MUST_EXIST);
+        $course = get_course($cm->course);
         require_login($course, false, $cm);
 
         $context = context_module::instance($cm->id);
@@ -111,7 +113,7 @@ class mobile {
 
         $userrating = rating_manager::get_user_rating((int) $cm->instance);
         $stats = rating_manager::get_stats((int) $cm->instance);
-        $customdata = (array) $cm->customdata;
+        $customdata = (array) get_fast_modinfo($course)->get_cm($cm->id)->customdata;
         $url = (new moodle_url('/mod/starrating/view.php', ['id' => $cm->id]))->out(false);
 
         $stars = [];
