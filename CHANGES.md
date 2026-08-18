@@ -17,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The stars appear directly on the course page, the way a label shows its text,
   so rating is still a single click without opening anything.
 
+### Changed
+
+- The report is now two pages, *Star rating averages* and *Star ratings by
+  user*, instead of one page holding both. The filter carries over between
+  them.
+
 ### Fixed
 
 - In the Moodle app the course page showed no activity name, a module icon that
@@ -48,9 +54,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   on.
 - Web services `mod_starrating_set_rating` and `mod_starrating_get_rating`, both
   part of the official mobile service and available over AJAX.
-- Site report under *Site administration → Reports → Star ratings*: averages
-  grouped by course, by activity or by both, filterable by course and activity,
-  plus a sortable, paged and downloadable list of the individual ratings.
+- Site reports under *Site administration → Reports*: averages grouped by
+  course, by activity or by both, and a separate sortable, paged and
+  downloadable list of the individual ratings, both filterable by course and
+  activity.
 - Per activity settings for showing the average and for allowing withdrawal,
   with site wide defaults.
 - Overview page listing every star rating of a course with its average.

@@ -42,7 +42,14 @@ if ($ADMIN->fulltree) {
 
 $ADMIN->add('reports', new admin_externalpage(
     'starratingreport',
-    get_string('report', 'mod_starrating'),
+    get_string('reportaverages', 'mod_starrating'),
     new moodle_url('/mod/starrating/report.php'),
+    'mod/starrating:viewreports'
+));
+
+$ADMIN->add('reports', new admin_externalpage(
+    'starratingdetails',
+    get_string('reportdetails', 'mod_starrating'),
+    new moodle_url('/mod/starrating/details.php'),
     'mod/starrating:viewreports'
 ));

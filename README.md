@@ -47,19 +47,20 @@ Activity modules → Star rating*.
 Users need `mod/starrating:rate`, which students, teachers and managers have by
 default. Guests and users without it see the stars as a read only display.
 
-## The report
+## The reports
 
-*Site administration → Reports → Star ratings*, capability
-`mod/starrating:viewreports` (managers by default).
+Two pages under *Site administration → Reports*, both behind
+`mod/starrating:viewreports` (managers by default), each carrying the filter
+over to the other:
 
-- Filter by course, by activity, or both.
-- Group the averages by course and activity, by course, or by activity name
-  across courses.
-- Below the averages, every individual rating is listed with the user who gave
+- **Star rating averages** — filter by course, by activity or both, and group
+  the averages by course and activity, by course, or by activity name across
+  courses.
+- **Star ratings by user** — every individual rating with the person who gave
   it, sortable, paged and downloadable in the usual Moodle formats.
 
-Because the individual list names users, the capability carries `RISK_PERSONAL`
-and is not granted to teachers by default.
+The second page names users, which is why the capability carries
+`RISK_PERSONAL` and is not granted to teachers by default.
 
 ## Moodle app
 

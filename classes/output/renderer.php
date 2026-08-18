@@ -78,18 +78,21 @@ class renderer extends plugin_renderer_base {
      * @param array $criterionoptions Criterion to criterion.
      * @param int $courseid Selected course, 0 for all.
      * @param string $criterion Selected criterion, empty for all.
-     * @param string $groupby Selected grouping.
+     * @param string|null $groupby Selected grouping, null to leave the grouping control out.
      * @return string HTML.
      */
     public function report_filter(moodle_url $actionurl, array $courseoptions, array $criterionoptions,
-            int $courseid, string $criterion, string $groupby): string {
+            int $courseid, string $criterion, ?string $groupby = null): string {
 
         $controls = $this->filter_control('courseid', get_string('filtercourse', 'mod_starrating'),
             $courseoptions, $courseid);
         $controls .= $this->filter_control('activity', get_string('filteractivity', 'mod_starrating'),
             $criterionoptions, $criterion);
-        $controls .= $this->filter_control('groupby', get_string('filtergroupby', 'mod_starrating'),
-            report::get_group_options(), $groupby);
+
+        if ($groupby !== null) {
+            $controls .= $this->filter_control('groupby', get_string('filtergroupby', 'mod_starrating'),
+                report::get_group_options(), $groupby);
+        }
 
         $controls .= html_writer::div(html_writer::empty_tag('input', [
             'type' => 'submit',

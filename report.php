@@ -15,11 +15,10 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Site wide report over all star rating activities.
+ * Averages over all star rating activities.
  *
- * Shows averages per course and per activity, plus the individual ratings.
- * The individual ratings name the users who rated, which is why the report
- * needs mod/starrating:viewreports.
+ * The individual ratings live on details.php, because they name the people who
+ * rated and are a much longer list.
  *
  * @package    mod_starrating
  * @copyright  2026 Think Modular
@@ -28,57 +27,48 @@
 
 require_once(__DIR__ . '/../../config.php');
 require_once($CFG->libdir . '/adminlib.php');
-require_once($CFG->libdir . '/tablelib.php');
 
 use mod_starrating\local\report;
-use mod_starrating\output\ratings_table;
 
 $courseid = optional_param('courseid', 0, PARAM_INT);
 $activity = optional_param('activity', '', PARAM_TEXT);
 $groupby = optional_param('groupby', report::GROUP_COURSE_CRITERION, PARAM_ALPHA);
-$download = optional_param('download', '', PARAM_ALPHA);
-$perpage = optional_param('perpage', 50, PARAM_INT);
 
 $groupby = report::validate_groupby($groupby);
-$perpage = min(max($perpage, 5), 500);
-
 $filterparams = ['courseid' => $courseid, 'activity' => $activity, 'groupby' => $groupby];
 
 admin_externalpage_setup('starratingreport', '', $filterparams);
 
 $baseurl = new moodle_url('/mod/starrating/report.php', $filterparams);
 
-$table = new ratings_table('mod_starrating_report', $baseurl, $courseid, $activity);
-$table->is_downloading($download, 'ratings', get_string('details', 'mod_starrating'));
+/** @var \mod_starrating\output\renderer $renderer */
+$renderer = $PAGE->get_renderer('mod_starrating');
 
-if (!$table->is_downloading()) {
-    /** @var \mod_starrating\output\renderer $renderer */
-    $renderer = $PAGE->get_renderer('mod_starrating');
+echo $OUTPUT->header();
+echo $OUTPUT->heading(get_string('reportaverages', 'mod_starrating'), 2);
 
-    echo $OUTPUT->header();
-    echo $OUTPUT->heading(get_string('report', 'mod_starrating'), 2);
+echo $renderer->report_filter(
+    $baseurl,
+    report::get_course_options(),
+    report::get_activity_options(),
+    $courseid,
+    $activity,
+    $groupby
+);
 
-    echo $renderer->report_filter(
-        $baseurl,
-        report::get_course_options(),
-        report::get_activity_options(),
-        $courseid,
-        $activity,
-        $groupby
-    );
+echo $renderer->summary_table(
+    report::get_summary($courseid, $activity, $groupby),
+    $groupby,
+    report::get_overall($courseid, $activity)
+);
 
-    echo $OUTPUT->heading(get_string('averages', 'mod_starrating'), 3);
-    echo $renderer->summary_table(
-        report::get_summary($courseid, $activity, $groupby),
-        $groupby,
-        report::get_overall($courseid, $activity)
-    );
+// Carry the filter over, so the same selection can be looked at rating by rating.
+echo html_writer::div(
+    html_writer::link(
+        new moodle_url('/mod/starrating/details.php', ['courseid' => $courseid, 'activity' => $activity]),
+        get_string('viewdetails', 'mod_starrating')
+    ),
+    'mt-3'
+);
 
-    echo $OUTPUT->heading(get_string('details', 'mod_starrating'), 3);
-}
-
-$table->out($perpage, true);
-
-if (!$table->is_downloading()) {
-    echo $OUTPUT->footer();
-}
+echo $OUTPUT->footer();
