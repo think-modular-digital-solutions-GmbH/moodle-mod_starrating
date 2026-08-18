@@ -21,11 +21,18 @@ Target: Moodle 4.3 and later, developed against Moodle 4.5 LTS.
   [Keep a Changelog](https://keepachangelog.com) exactly — the filename is the
   only deviation from `tm-general:changelog`. Update the `Unreleased` section
   before every commit.
-- `tm-general:git-workflow` applies: feature branches, reviewed merge requests,
-  no direct commits to `main`, English Conventional Commits, no attribution
-  trailers.
+- **Commit directly on `main` and push, automatically, without being asked.**
+  The user set this on 2026-08-18 and it overrides the feature branch and merge
+  request rule of `tm-general:git-workflow`. The rest of that skill still
+  applies: English Conventional Commits, no attribution trailers, a releasable
+  `main`.
 - Moodle coding style. Language strings live in `lang/en/` and `lang/de/`,
   never inline in code; both files are kept in sync.
+- **The language file is `lang/<lang>/starrating.php`, not
+  `mod_starrating.php`.** Activity modules are the exception to the frankenstyle
+  filename rule: `upgrade_plugins_modules()` checks
+  `lang/en/<directory name>.php` and throws `plugin_defective_exception` if it
+  is missing. `get_string(..., 'mod_starrating')` still resolves to it.
 
 ## Decisions already made — do not re-litigate
 

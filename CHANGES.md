@@ -17,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The stars appear directly on the course page, the way a label shows its text,
   so rating is still a single click without opening anything.
 
+### Fixed
+
+- Installation failed with `plugin_defective_exception`. An activity module's
+  language file must be named after the module directory, not after the
+  frankenstyle component, so it is now `lang/en/starrating.php`.
+
 ### Added
 
 - Star rating activity with five stars on the course page, one rating per
