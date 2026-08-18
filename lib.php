@@ -39,10 +39,11 @@ function starrating_supports($feature) {
         case FEATURE_BACKUP_MOODLE2:
             return true;
 
-        // The stars are rendered on the course page itself, like a label, so
-        // the activity needs no link of its own there.
+        // The stars are rendered on the course page, but the activity keeps its
+        // own page: it is the only place the Moodle app can rate from, and
+        // without a view link neither Moodle nor the app will open it at all.
         case FEATURE_NO_VIEW_LINK:
-            return true;
+            return false;
 
         case FEATURE_GRADE_HAS_GRADE:
         case FEATURE_GRADE_OUTCOMES:
@@ -160,7 +161,8 @@ function starrating_cm_info_view(cm_info $cm) {
         return;
     }
 
-    $widget = new \mod_starrating\output\rating_widget($cm, $PAGE->has_set_url() ? $PAGE->url : null);
+    // Moodle already prints the activity name above this, so the widget does not.
+    $widget = new \mod_starrating\output\rating_widget($cm, $PAGE->has_set_url() ? $PAGE->url : null, false);
     $stars = $PAGE->get_renderer('mod_starrating')->render($widget);
 
     $cm->set_content($cm->content . $stars, true);

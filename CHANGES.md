@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The activity could not be opened at all, on the web or in the app, because it
+  declared that it has no view link. That also stopped the Moodle app from
+  rating: the app can only submit from the activity page, which it could never
+  reach. The activity name on the course page is a link again.
 - The rating web services validated the activity context only after building
   course module information for the user, which can fail with a login error
   instead of a clean permission error when called from the app.
