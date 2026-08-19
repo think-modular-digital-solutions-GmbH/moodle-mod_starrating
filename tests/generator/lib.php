@@ -22,8 +22,6 @@
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Creates star rating activities for tests.
  *
@@ -32,7 +30,6 @@ defined('MOODLE_INTERNAL') || die();
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class mod_starrating_generator extends testing_module_generator {
-
     /**
      * Create an activity instance with sensible defaults.
      *
@@ -59,5 +56,41 @@ class mod_starrating_generator extends testing_module_generator {
         }
 
         return parent::create_instance($record, (array) $options);
+    }
+
+    /**
+     * Store a rating a user gave to an activity.
+     *
+     * Goes through the manager rather than the database, so that a seeded rating
+     * is indistinguishable from one somebody clicked.
+     *
+     * @param array|stdClass $record Needs starratingid, userid and rating.
+     * @return stdClass The stored rating record.
+     */
+    public function create_rating($record): stdClass {
+        global $DB;
+
+        $record = (object) (array) $record;
+
+        foreach (['starratingid', 'userid', 'rating'] as $field) {
+            if (!isset($record->{$field})) {
+                throw new coding_exception('A star rating needs a ' . $field . '.');
+            }
+        }
+
+        $cm = get_coursemodule_from_instance('starrating', $record->starratingid, 0, false, MUST_EXIST);
+        $context = context_module::instance($cm->id);
+
+        \mod_starrating\local\rating_manager::set_rating(
+            $context,
+            (int) $record->starratingid,
+            (int) $record->rating,
+            (int) $record->userid
+        );
+
+        return $DB->get_record(\mod_starrating\local\rating_manager::TABLE, [
+            'starratingid' => $record->starratingid,
+            'userid' => $record->userid,
+        ]);
     }
 }

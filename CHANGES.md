@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Behat tests covering what the plugin promises: rating with a single click on
+  the course page and on the activity page, changing and withdrawing a rating,
+  the per activity scale and the refusal to shorten it below the highest rating
+  given, the course report and the site wide report including the mixed scale
+  average, and read only stars for everybody who may not rate. A data generator
+  step seeds ratings, `the following "mod_starrating > ratings" exist:`.
+
 ### Changed
 
 - **The plugin is now an activity, not a text filter.** Star ratings are added

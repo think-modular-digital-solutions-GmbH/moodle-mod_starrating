@@ -111,9 +111,20 @@ app open plugin content natively.
 
 ## Verification
 
-There is no Moodle installation with a `config.php` on this machine, and no
-`phpcs`/`composer`, so style checks and unit tests cannot be run here. Say so
-rather than implying they passed.
+**Everything can be run and must be run.** `~/Documents/behat` holds a Docker
+Moodle 4.5 that mounts this repository at `mod/starrating`, so tests and style
+checks run against the working tree. Its `README.md` has the details; the short
+version:
+
+```bash
+~/Documents/behat/up.sh          # once per boot, idempotent
+~/Documents/behat/behat.sh       # 22 acceptance scenarios, ~75 s
+~/Documents/behat/phpunit.sh     # 25 unit tests, ~7 s
+~/Documents/behat/phpcs.sh       # Moodle coding style, silence means clean
+```
+
+Do not claim a check passed without having run it, and never fix style by eye
+when `phpcs.sh` will say exactly what is wrong.
 
 A Moodle 4.5 checkout is available at `~/Documents/gitlab/moodle` and the
 Moodle app source at `~/Documents/moodleapp/app` — **read them to verify API
@@ -132,7 +143,7 @@ so even when the answer is nothing. Standing instruction from 2026-08-18.
 | Web service code only | Nothing; the rating calls run with `getFromCache: 0` |
 | `version.php` bumped | Moodle *Notifications* and purge caches first, then whatever the app needs |
 
-Against a real installation:
+Inside a Moodle installation of your own the same two checks are:
 
 ```bash
 vendor/bin/phpcs --standard=moodle mod/starrating
