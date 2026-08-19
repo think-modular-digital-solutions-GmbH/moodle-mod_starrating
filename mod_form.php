@@ -36,7 +36,6 @@ use mod_starrating\local\rating_manager;
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class mod_starrating_mod_form extends moodleform_mod {
-
     /**
      * Define the form.
      *
@@ -58,8 +57,12 @@ class mod_starrating_mod_form extends moodleform_mod {
 
         $mform->addElement('header', 'starratingdisplay', get_string('displaysettings', 'mod_starrating'));
 
-        $mform->addElement('select', 'maxstars', get_string('maxstars', 'mod_starrating'),
-            rating_manager::get_max_stars_options());
+        $mform->addElement(
+            'select',
+            'maxstars',
+            get_string('maxstars', 'mod_starrating'),
+            rating_manager::get_max_stars_options()
+        );
         $mform->setType('maxstars', PARAM_INT);
         $mform->addHelpButton('maxstars', 'maxstars', 'mod_starrating');
         $mform->setDefault('maxstars', rating_manager::get_default_max_stars());

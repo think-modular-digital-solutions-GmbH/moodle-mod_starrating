@@ -30,7 +30,6 @@ use mod_starrating\local\rating_manager;
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class set_rating extends external_api {
-
     /**
      * Parameter definition.
      *
@@ -39,8 +38,10 @@ class set_rating extends external_api {
     public static function execute_parameters(): external_function_parameters {
         return new external_function_parameters([
             'cmid' => new external_value(PARAM_INT, 'Course module id of the activity'),
-            'rating' => new external_value(PARAM_INT,
-                'Number of stars, 1 to the maximum of the activity, or 0 to withdraw the rating'),
+            'rating' => new external_value(
+                PARAM_INT,
+                'Number of stars, 1 to the maximum of the activity, or 0 to withdraw the rating'
+            ),
         ]);
     }
 

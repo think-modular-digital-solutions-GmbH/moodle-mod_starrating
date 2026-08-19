@@ -24,7 +24,6 @@ namespace mod_starrating\event;
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class rating_submitted extends \core\event\base {
-
     /**
      * Set the basic event properties.
      *

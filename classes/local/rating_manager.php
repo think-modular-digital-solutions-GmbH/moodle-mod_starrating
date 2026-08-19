@@ -31,7 +31,6 @@ use stdClass;
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class rating_manager {
-
     /** @var int Shortest rating scale an activity can use. A scale needs at least two values. */
     public const MIN_MAX_STARS = 2;
 

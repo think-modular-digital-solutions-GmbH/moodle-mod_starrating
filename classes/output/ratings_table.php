@@ -35,7 +35,6 @@ use table_sql;
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class ratings_table extends table_sql {
-
     /**
      * Constructor.
      *
@@ -46,8 +45,13 @@ class ratings_table extends table_sql {
      * @param bool $showcourse Whether to show the course column, which says nothing
      *                         in a report that is about one course already.
      */
-    public function __construct(string $uniqueid, moodle_url $baseurl, int $courseid, string $activity,
-            bool $showcourse = true) {
+    public function __construct(
+        string $uniqueid,
+        moodle_url $baseurl,
+        int $courseid,
+        string $activity,
+        bool $showcourse = true
+    ) {
         parent::__construct($uniqueid);
 
         $columns = ['coursename', 'criterion', 'fullname', 'rating', 'timemodified'];

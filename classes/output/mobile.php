@@ -28,7 +28,6 @@ use moodle_url;
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class mobile {
-
     /**
      * JavaScript the app runs once when it loads the site plugins.
      *
@@ -47,8 +46,10 @@ class mobile {
         // An unreadable file would hand the app an empty script and silently
         // leave the course page stars dead, so say so instead.
         if (!is_readable($path)) {
-            debugging("mod_starrating: {$path} is missing, the stars on the course page will not work in the app.",
-                DEBUG_DEVELOPER);
+            debugging(
+                "mod_starrating: {$path} is missing, the stars on the course page will not work in the app.",
+                DEBUG_DEVELOPER
+            );
 
             return ['templates' => [], 'javascript' => '', 'otherdata' => ''];
         }

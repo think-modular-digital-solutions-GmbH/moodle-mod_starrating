@@ -28,7 +28,6 @@ use mod_starrating\local\rating_manager;
  * @covers     \mod_starrating\local\rating_manager
  */
 final class rating_manager_test extends \advanced_testcase {
-
     /**
      * Drop the request level caches of the manager.
      *

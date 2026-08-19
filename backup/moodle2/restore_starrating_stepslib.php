@@ -22,8 +22,6 @@
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
-
 use mod_starrating\local\rating_manager;
 
 /**
@@ -34,7 +32,6 @@ use mod_starrating\local\rating_manager;
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class restore_starrating_activity_structure_step extends restore_activity_structure_step {
-
     /**
      * Define the paths to restore.
      *

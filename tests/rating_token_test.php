@@ -27,7 +27,6 @@ use mod_starrating\local\rating_token;
  * @covers     \mod_starrating\local\rating_token
  */
 final class rating_token_test extends \advanced_testcase {
-
     /**
      * A token is accepted only for exactly the link it was generated for.
      *

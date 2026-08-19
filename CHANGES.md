@@ -40,6 +40,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Every Moodle coding style violation the plugin had: 87 errors and 7 warnings
+  reported by `phpcs --standard=moodle` are gone, among them unnecessary
+  `MOODLE_INTERNAL` checks, blank lines after a class brace, multi-line calls
+  and declarations, undocumented promoted constructor properties, the order of
+  the privacy interfaces and of the language strings.
 - In the Moodle app the course page showed no activity name, a module icon that
   said nothing, and the average crammed next to the stars. The name, the stars
   and the average are now stacked and centred, and the icon is gone.

@@ -28,7 +28,6 @@ use mod_starrating\local\report;
  * @covers     \mod_starrating\local\report
  */
 final class report_test extends \advanced_testcase {
-
     /**
      * Drop the request level caches of the manager.
      *

@@ -32,7 +32,6 @@ namespace mod_starrating\local;
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class rating_token {
-
     /**
      * Sign one rating link.
      *

@@ -34,7 +34,6 @@ require_once($CFG->dirroot . '/mod/starrating/backup/moodle2/restore_starrating_
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class restore_starrating_activity_task extends restore_activity_task {
-
     /**
      * No particular settings for this activity.
      *

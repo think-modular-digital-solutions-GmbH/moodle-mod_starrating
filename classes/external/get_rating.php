@@ -30,7 +30,6 @@ use mod_starrating\local\rating_manager;
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class get_rating extends external_api {
-
     /**
      * Parameter definition.
      *

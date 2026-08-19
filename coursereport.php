@@ -56,8 +56,11 @@ $PAGE->set_heading(format_string($course->fullname));
 
 // The course column would repeat the course this page is already about.
 $table = new ratings_table('mod_starrating_coursereport', $baseurl, $course->id, $activity, false);
-$table->is_downloading($download, clean_filename('ratings-' . $course->shortname),
-    get_string('coursereport', 'mod_starrating'));
+$table->is_downloading(
+    $download,
+    clean_filename('ratings-' . $course->shortname),
+    get_string('coursereport', 'mod_starrating')
+);
 
 if ($table->is_downloading()) {
     $table->out($perpage, true);

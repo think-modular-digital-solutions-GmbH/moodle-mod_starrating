@@ -31,7 +31,6 @@ use stdClass;
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class renderer extends plugin_renderer_base {
-
     /**
      * Render the interactive star widget.
      *
@@ -109,17 +108,34 @@ class renderer extends plugin_renderer_base {
      * @param string|null $groupby Selected grouping, null to leave the grouping control out.
      * @return string HTML.
      */
-    public function report_filter(moodle_url $actionurl, array $courseoptions, array $criterionoptions,
-            int $courseid, string $criterion, ?string $groupby = null): string {
-
-        $controls = $this->filter_control('courseid', get_string('filtercourse', 'mod_starrating'),
-            $courseoptions, $courseid);
-        $controls .= $this->filter_control('activity', get_string('filteractivity', 'mod_starrating'),
-            $criterionoptions, $criterion);
+    public function report_filter(
+        moodle_url $actionurl,
+        array $courseoptions,
+        array $criterionoptions,
+        int $courseid,
+        string $criterion,
+        ?string $groupby = null
+    ): string {
+        $controls = $this->filter_control(
+            'courseid',
+            get_string('filtercourse', 'mod_starrating'),
+            $courseoptions,
+            $courseid
+        );
+        $controls .= $this->filter_control(
+            'activity',
+            get_string('filteractivity', 'mod_starrating'),
+            $criterionoptions,
+            $criterion
+        );
 
         if ($groupby !== null) {
-            $controls .= $this->filter_control('groupby', get_string('filtergroupby', 'mod_starrating'),
-                report::get_group_options(), $groupby);
+            $controls .= $this->filter_control(
+                'groupby',
+                get_string('filtergroupby', 'mod_starrating'),
+                report::get_group_options(),
+                $groupby
+            );
         }
 
         $controls .= html_writer::div(html_writer::empty_tag('input', [
@@ -150,11 +166,18 @@ class renderer extends plugin_renderer_base {
      * @param string $criterion Selected activity name, empty for all.
      * @return string HTML.
      */
-    public function course_report_filter(moodle_url $actionurl, array $criterionoptions,
-            int $courseid, string $criterion): string {
-
-        $controls = $this->filter_control('activity', get_string('filteractivity', 'mod_starrating'),
-            $criterionoptions, $criterion);
+    public function course_report_filter(
+        moodle_url $actionurl,
+        array $criterionoptions,
+        int $courseid,
+        string $criterion
+    ): string {
+        $controls = $this->filter_control(
+            'activity',
+            get_string('filteractivity', 'mod_starrating'),
+            $criterionoptions,
+            $criterion
+        );
 
         $controls .= html_writer::div(html_writer::empty_tag('input', [
             'type' => 'submit',
@@ -244,11 +267,16 @@ class renderer extends plugin_renderer_base {
         $label = new \html_table_cell(get_string('overallaverage', 'mod_starrating'));
         $label->colspan = (int) $showcourse + (int) $showcriterion;
         $label->header = true;
+        $overallaverage = $this->average_cell(
+            $overall->count,
+            $overall->maxstars,
+            $overall->average,
+            $overall->fraction
+        );
         $overallrow->cells = [
             $label,
             new \html_table_cell((string) $overall->count),
-            new \html_table_cell($this->average_cell(
-                $overall->count, $overall->maxstars, $overall->average, $overall->fraction)),
+            new \html_table_cell($overallaverage),
         ];
         $table->data[] = $overallrow;
 

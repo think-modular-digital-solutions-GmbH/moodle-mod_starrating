@@ -38,7 +38,6 @@ use templatable;
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class rating_widget implements renderable, templatable {
-
     /**
      * Constructor.
      *
@@ -47,8 +46,11 @@ class rating_widget implements renderable, templatable {
      * @param bool $showname Whether to show the activity name above the stars.
      */
     public function __construct(
+        /** @var cm_info The course module the stars belong to. */
         protected cm_info $cm,
+        /** @var moodle_url|null Page to return to after rating. */
         protected ?moodle_url $returnurl = null,
+        /** @var bool Whether to show the activity name above the stars. */
         protected bool $showname = true
     ) {
     }

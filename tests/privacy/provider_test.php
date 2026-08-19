@@ -32,7 +32,6 @@ use mod_starrating\local\rating_manager;
  * @covers     \mod_starrating\privacy\provider
  */
 final class provider_test extends \core_privacy\tests\provider_testcase {
-
     /** @var \stdClass The activity instance. */
     protected $instance;
 

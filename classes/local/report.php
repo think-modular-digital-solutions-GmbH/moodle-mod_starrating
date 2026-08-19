@@ -30,7 +30,6 @@ use stdClass;
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class report {
-
     /** @var string Average per course and activity. */
     public const GROUP_COURSE_CRITERION = 'coursecriterion';
 
