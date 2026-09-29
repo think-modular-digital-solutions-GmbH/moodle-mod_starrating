@@ -118,7 +118,7 @@ version:
 
 ```bash
 ~/Documents/behat/up.sh          # once per boot, idempotent
-~/Documents/behat/behat.sh       # 22 acceptance scenarios, ~75 s
+~/Documents/behat/behat.sh       # 23 acceptance scenarios, ~75 s
 ~/Documents/behat/phpunit.sh     # 25 unit tests, ~7 s
 ~/Documents/behat/phpcs.sh       # Moodle coding style, silence means clean
 ```

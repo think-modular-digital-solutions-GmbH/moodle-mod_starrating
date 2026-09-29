@@ -76,9 +76,10 @@ Two pages under *Site administration → Reports*, both behind
 `mod/starrating:viewreports` (managers by default), each carrying the filter
 over to the other:
 
-- **Star rating averages** — filter by course, by activity or both, and group
-  the averages by course and activity, by course, or by activity name across
-  courses.
+- **Star rating averages** — opens on the number of ratings and the average per
+  course, and every course name leads to that course's own star rating report.
+  Filter by course, by activity or both, and group the averages by course, by
+  course and activity, or by activity name across courses.
 - **Star ratings by user** — every individual rating with the person who gave
   it, sortable, paged and downloadable in the usual Moodle formats.
 

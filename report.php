@@ -17,8 +17,10 @@
 /**
  * Averages over all star rating activities.
  *
- * The individual ratings live on details.php, because they name the people who
- * rated and are a much longer list.
+ * It opens on one row per course, and every course links to the course report,
+ * which breaks that course down by activity and by person. The individual
+ * ratings of the whole site live on details.php, because they name the people
+ * who rated and are a much longer list.
  *
  * @package    mod_starrating
  * @copyright  2026 Think Modular
@@ -32,7 +34,7 @@ use mod_starrating\local\report;
 
 $courseid = optional_param('courseid', 0, PARAM_INT);
 $activity = optional_param('activity', '', PARAM_TEXT);
-$groupby = optional_param('groupby', report::GROUP_COURSE_CRITERION, PARAM_ALPHA);
+$groupby = optional_param('groupby', report::GROUP_COURSE, PARAM_ALPHA);
 
 $groupby = report::validate_groupby($groupby);
 $filterparams = ['courseid' => $courseid, 'activity' => $activity, 'groupby' => $groupby];

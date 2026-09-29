@@ -93,8 +93,8 @@ class report {
      */
     public static function get_group_options(): array {
         return [
-            self::GROUP_COURSE_CRITERION => get_string('groupbycoursecriterion', 'mod_starrating'),
             self::GROUP_COURSE => get_string('groupbycourse', 'mod_starrating'),
+            self::GROUP_COURSE_CRITERION => get_string('groupbycoursecriterion', 'mod_starrating'),
             self::GROUP_CRITERION => get_string('groupbycriterion', 'mod_starrating'),
         ];
     }
@@ -106,7 +106,7 @@ class report {
      * @return string A valid grouping.
      */
     public static function validate_groupby(string $groupby): string {
-        return array_key_exists($groupby, self::get_group_options()) ? $groupby : self::GROUP_COURSE_CRITERION;
+        return array_key_exists($groupby, self::get_group_options()) ? $groupby : self::GROUP_COURSE;
     }
 
     /**

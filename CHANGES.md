@@ -35,6 +35,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   lengths are reported as a share of the scale instead of as stars, because four
   of five and eight of ten are the same judgement and adding them up as stars
   would not be. Rows on a single scale are unchanged.
+- *Star rating averages* now opens grouped per course, with the number of
+  ratings and the average of each, and every course name links to the star
+  rating report of that course instead of to the course page. Viewers who may
+  not see a course report still get the course page.
 - The course overview page and the course report show the length of each scale,
   and the individual ratings say which scale each rating was given on.
 

@@ -16,6 +16,7 @@
 
 namespace mod_starrating\output;
 
+use context_course;
 use mod_starrating\local\report;
 use html_table;
 use html_writer;
@@ -249,10 +250,7 @@ class renderer extends plugin_renderer_base {
         foreach ($rows as $row) {
             $cells = [];
             if ($showcourse) {
-                $cells[] = html_writer::link(
-                    new moodle_url('/course/view.php', ['id' => $row->courseid]),
-                    $row->coursename
-                );
+                $cells[] = $this->course_report_link($row->courseid, $row->coursename);
             }
             if ($showcriterion) {
                 $cells[] = s($row->criterion);
@@ -281,6 +279,29 @@ class renderer extends plugin_renderer_base {
         $table->data[] = $overallrow;
 
         return html_writer::table($table);
+    }
+
+    /**
+     * A course name that leads to the star rating report of that course.
+     *
+     * The course report is behind a course level capability, which a role
+     * granted mod/starrating:viewreports at site level need not have. Such a
+     * viewer gets the course itself instead of a page that refuses them.
+     *
+     * @param int $courseid The course.
+     * @param string $coursename The course name, already formatted.
+     * @return string HTML.
+     */
+    protected function course_report_link(int $courseid, string $coursename): string {
+        $context = context_course::instance($courseid);
+
+        if (has_capability('mod/starrating:viewcoursereport', $context)) {
+            $url = new moodle_url('/mod/starrating/coursereport.php', ['id' => $courseid]);
+        } else {
+            $url = new moodle_url('/course/view.php', ['id' => $courseid]);
+        }
+
+        return html_writer::link($url, $coursename);
     }
 
     /**

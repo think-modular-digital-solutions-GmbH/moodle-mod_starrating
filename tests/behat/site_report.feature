@@ -30,12 +30,32 @@ Feature: See the star ratings of the whole site
       | activity | user     | rating |
       | tq5      | student1 | 4      |
 
+  Scenario: The report opens per course and leads to the course report
+    Given the following "mod_starrating > ratings" exist:
+      | activity | user     | rating |
+      | cd5      | student2 | 2      |
+      | tq10     | student1 | 8      |
+    And I log in as "admin"
+    When I navigate to "Reports > Star rating averages" in site administration
+    Then the following should exist in the "Average rating per selected grouping" table:
+      | Course   | Ratings | Average                          |
+      | Course 1 | 2       | Average 3.0 of 5 from 2 ratings  |
+      | Course 2 | 1       | Average 8.0 of 10 from 1 ratings |
+    And I click on "Course 1" "link" in the "Average rating per selected grouping" "table"
+    And I should see "Average rating per star rating activity of this course"
+    And the following should exist in the "Average rating per star rating activity of this course" table:
+      | Activity         | Ratings | Average                         |
+      | Course design    | 1       | Average 2.0 of 5 from 1 ratings |
+      | Teaching quality | 1       | Average 4.0 of 5 from 1 ratings |
+
   Scenario: The averages are reported per course and activity
     Given the following "mod_starrating > ratings" exist:
       | activity | user     | rating |
       | cd5      | student2 | 3      |
     And I log in as "admin"
-    When I navigate to "Reports > Star rating averages" in site administration
+    And I navigate to "Reports > Star rating averages" in site administration
+    When I set the field "Group by" to "Course and activity"
+    And I press "Apply filter"
     Then the following should exist in the "Average rating per selected grouping" table:
       | Course   | Activity         | Ratings | Average                         |
       | Course 1 | Course design    | 1       | Average 3.0 of 5 from 1 ratings |
@@ -51,6 +71,8 @@ Feature: See the star ratings of the whole site
       | tq10     | student1 | 8      |
     And I log in as "admin"
     And I navigate to "Reports > Star rating averages" in site administration
+    And I set the field "Group by" to "Course and activity"
+    And I press "Apply filter"
     And the following should exist in the "Average rating per selected grouping" table:
       | Course   | Activity         | Ratings | Average                           |
       | Course 2 | Teaching quality | 1       | Average 8.0 of 10 from 1 ratings  |
