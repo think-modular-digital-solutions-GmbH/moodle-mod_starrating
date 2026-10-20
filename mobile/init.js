@@ -76,8 +76,8 @@ var showError = function(error) {
  * @param {Boolean} filled Whether the star is covered by the rating.
  */
 var setStarState = function(star, filled) {
-    star.classList.toggle('filter-rating-on', filled);
-    star.classList.toggle('filter-rating-off', !filled);
+    star.classList.toggle('starrating-on', filled);
+    star.classList.toggle('starrating-off', !filled);
 
     var icon = star.querySelector('ion-icon, i');
     if (!icon) {
@@ -99,7 +99,7 @@ var setStarState = function(star, filled) {
  * @param {Object} result Result of mod_starrating_set_rating.
  */
 var updateWidget = function(widget, result) {
-    var stars = widget.querySelectorAll('.filter-rating-star');
+    var stars = widget.querySelectorAll('.starrating-star');
     for (var i = 0; i < stars.length; i++) {
         setStarState(stars[i], parseInt(stars[i].getAttribute('data-value'), 10) <= result.userrating);
     }
@@ -114,7 +114,7 @@ var updateWidget = function(widget, result) {
     // Saving the text alone needs stars to keep, so the button waits for them.
     var save = widget.querySelector('[data-action="savefeedback"]');
     if (save) {
-        save.classList.toggle('filter-rating-hidden', !(result.userrating > 0));
+        save.classList.toggle('starrating-hidden', !(result.userrating > 0));
     }
 
     var status = widget.querySelector('[data-region="status"]');
@@ -219,7 +219,7 @@ var closestInWidget = function(event, selector) {
  * @param {Event} event The event.
  */
 var handleActivation = function(event) {
-    var star = closestInWidget(event, '.filter-rating-star[data-value]');
+    var star = closestInWidget(event, '.starrating-star[data-value]');
     var save = star ? null : closestInWidget(event, '[data-action="savefeedback"]');
     if (!star && !save) {
         return;
@@ -277,7 +277,7 @@ document.addEventListener('keydown', function(event) {
         if (closestInWidget(event, '.starrating-feedback')) {
             stopEvent(event, false);
         } else if ((event.key === 'Enter' || event.key === ' ')
-                && closestInWidget(event, '.filter-rating-star[data-value]')) {
+                && closestInWidget(event, '.starrating-star[data-value]')) {
             stopEvent(event, true);
         }
     }, true);

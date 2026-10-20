@@ -17,6 +17,9 @@
 {{!
     @template mod_starrating/mobile_course_page
 
+    @copyright  2026 Think Modular
+    @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+
     The stars as they appear inline on the course page in the Moodle app. There
     are as many as the scale of the activity is long, two to ten.
 
@@ -79,25 +82,25 @@
 <div class="starrating-activity starrating-app-coursepage" data-cmid="{{cmid}}" data-courseid="{{courseid}}"
     data-userrating="{{userrating}}" data-canrate="{{#canrate}}1{{/canrate}}{{^canrate}}0{{/canrate}}">
     <span class="starrating-name">{{name}}</span>
-    <span class="filter-rating" role="group" aria-label="{{name}}">
+    <span class="starrating-widget" role="group" aria-label="{{name}}">
         <span class="sr-only visually-hidden" data-region="status">{{statustext}}</span>
-        <span class="filter-rating-stars">
+        <span class="starrating-stars">
             {{#stars}}
                 {{#canrate}}
-                    <span class="filter-rating-star {{#on}}filter-rating-on{{/on}}{{^on}}filter-rating-off{{/on}}"
+                    <span class="starrating-star {{#on}}starrating-on{{/on}}{{^on}}starrating-off{{/on}}"
                         data-value="{{value}}" role="button" tabindex="0" aria-label="{{label}}">
                         <i class="fa {{#on}}fa-star{{/on}}{{^on}}fa-star-o{{/on}}" aria-hidden="true"></i>
                     </span>
                 {{/canrate}}
                 {{^canrate}}
-                    <span class="filter-rating-star {{#on}}filter-rating-on{{/on}}{{^on}}filter-rating-off{{/on}}">
+                    <span class="starrating-star {{#on}}starrating-on{{/on}}{{^on}}starrating-off{{/on}}">
                         <i class="fa {{#on}}fa-star{{/on}}{{^on}}fa-star-o{{/on}}" aria-hidden="true"></i>
                     </span>
                 {{/canrate}}
             {{/stars}}
         </span>
         {{#showaverage}}
-            <span class="filter-rating-average" data-region="average">{{averagetext}}</span>
+            <span class="starrating-average" data-region="average">{{averagetext}}</span>
         {{/showaverage}}
     </span>
     {{#feedbackform}}
@@ -106,7 +109,7 @@
             <textarea id="starrating-app-feedback-{{cmid}}" name="feedback" rows="3" maxlength="{{feedbackmaxlength}}"
                 class="starrating-feedback-input">{{feedback}}</textarea>
             <button type="button" data-action="savefeedback"
-                class="starrating-feedback-save{{^userrating}} filter-rating-hidden{{/userrating}}">{{savefeedbacklabel}}</button>
+                class="starrating-feedback-save{{^userrating}} starrating-hidden{{/userrating}}">{{savefeedbacklabel}}</button>
         </span>
     {{/feedbackform}}
 </div>

@@ -25,8 +25,21 @@ activity.
 
 ## Installation
 
-1. Copy this repository to `mod/starrating` in your Moodle installation.
-2. Visit *Site administration → Notifications* to install the database tables.
+- **From a release:** download `mod_starrating-<version>.zip` from the
+  [GitHub releases](https://github.com/think-modular-digital-solutions-GmbH/moodle-mod_starrating/releases)
+  and upload it under *Site administration → Plugins → Install plugins*. The ZIP
+  has the `starrating` folder Moodle expects at its root; the "Source code"
+  archives GitHub adds to every release do not, and do not install as they are.
+- **From git:** clone this repository into `mod/starrating` (from Moodle 5.1 on,
+  `public/mod/starrating`), naming the target directory, then visit
+  *Site administration → Notifications*:
+
+  ```bash
+  git clone https://github.com/think-modular-digital-solutions-GmbH/moodle-mod_starrating.git mod/starrating
+  ```
+
+There are no steps after the installation. The activity is ready under *Add an
+activity or resource → Star rating*.
 
 The directory name has to be `starrating`. The module cannot be called `rating`,
 because Moodle core already owns a `rating` table.
@@ -217,6 +230,12 @@ This has not been verified with assistive technology or with users. Before
 rolling it out, have the widget checked by someone testing with a screen
 reader, and check the star colours against your theme.
 
+## Support
+
+Report bugs and ask for features in the
+[issue tracker](https://github.com/think-modular-digital-solutions-GmbH/moodle-mod_starrating/issues).
+This README is the documentation.
+
 ## Development
 
 ```bash
@@ -236,6 +255,42 @@ tool scripts in `public/admin/tool/`; `vendor/` stays in the root.
 The unit tests carry both `@covers` and `#[CoversClass]`, because PHPUnit 9 on
 Moodle 4.x reads the first and PHPUnit 11 on Moodle 5.x deprecates it in favour
 of the second.
+
+### Continuous integration
+
+`.github/workflows/ci.yml` runs [moodle-plugin-ci](https://moodlehq.github.io/moodle-plugin-ci/)
+on every push and pull request: PHP lint, the Moodle code checker and PHPDoc
+checker with no warnings allowed, plugin validation, upgrade savepoints,
+Mustache lint, Grunt, PHPUnit and Behat. It covers Moodle 4.3, 4.5 and 5.3 on
+PostgreSQL and MariaDB, with the lowest and highest PHP each supports. The app
+templates (`templates/mobile_*`) are left out of the HTML validation, through
+`templates/.mustachelintignore`, because the app compiles them as Angular
+templates.
+
+### Releasing
+
+Releases are automatic. To release, in one commit on `main`:
+
+1. Set `$plugin->release` in `version.php` to the new SemVer version, and raise
+   `$plugin->version` if it has not been raised since the last release.
+2. Move the *Unreleased* entries of `CHANGES.md` under a heading
+   `## [<release>] - <date>`.
+
+Once CI has passed on that commit, `.github/workflows/release.yml` tags it
+`v<release>`, creates the GitHub Release with that section of `CHANGES.md` as
+its notes and the installable ZIP attached, and submits the version to the
+Moodle Marketplace. It refuses, without tagging, a release that is not SemVer,
+whose `$plugin->version` is not above the previous one, or that has no section
+in `CHANGES.md`. A push that leaves `$plugin->release` alone releases nothing.
+
+The Marketplace step runs only while the repository variable
+`MARKETPLACE_RELEASE` is `true`, and it needs the secret
+`MOODLE_MARKETPLACE_TOKEN`, an API token from
+<https://marketplace.moodle.com/account/security>. To submit an existing tag
+again, run the *Release* workflow by hand with that tag.
+
+The ZIP is built with `git archive`, so whatever `.gitattributes` marks
+`export-ignore` stays out of it: the workflows and `CLAUDE.md`.
 
 The Behat features in `tests/behat/` cover rating on the course page and on the
 activity page, changing and withdrawing, the scale, text feedback, both reports

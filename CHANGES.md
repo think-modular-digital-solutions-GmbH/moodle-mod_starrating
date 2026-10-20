@@ -28,7 +28,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Behat tests for text feedback, and a `feedback` column for the
   `the following "mod_starrating > ratings" exist:` step.
 - Support for Moodle 5.3, declared as `$plugin->supported = [403, 503]`. Unit
-  tests, Behat features and the coding style check pass on Moodle 4.5 and 5.3.
+  tests, Behat features and the coding style check pass on Moodle 4.5 and 5.3,
+  on PostgreSQL and on MariaDB.
+- Every release is published on GitHub with an installable ZIP, and submitted
+  to the Moodle Marketplace.
+
+### Changed
+
+- The CSS classes of the stars are named after the plugin, `starrating-*`,
+  instead of `filter-rating-*`, which was left over from the text filter and
+  could clash with other plugins. A theme that styles the stars has to use the
+  new names: `.filter-rating` is now `.starrating-widget`, and
+  `.filter-rating-<part>` is `.starrating-<part>`, except `.filter-rating-app`,
+  which is `.starrating-widget-app`.
 
 ### Fixed
 

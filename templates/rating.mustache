@@ -17,6 +17,9 @@
 {{!
     @template mod_starrating/rating
 
+    @copyright  2026 Think Modular
+    @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+
     The stars of a star rating activity, on the web. How many there are is a per
     activity setting, two to ten, so the template never assumes five.
 
@@ -104,27 +107,27 @@
             <input type="hidden" name="{{name}}" value="{{value}}">
         {{/formparams}}
     {{/feedbackform}}
-    <span class="filter-rating" role="group" aria-label="{{grouplabel}}">
+    <span class="starrating-widget" role="group" aria-label="{{grouplabel}}">
         <span class="sr-only visually-hidden" data-region="status">{{statustext}}</span>
-        <span class="filter-rating-stars" data-region="stars">
+        <span class="starrating-stars" data-region="stars">
             {{#stars}}
                 {{#canrate}}
                     {{#feedbackform}}
                         <button type="submit" name="rating" value="{{value}}"
-                            class="filter-rating-star {{#on}}filter-rating-on{{/on}}{{^on}}filter-rating-off{{/on}}"
+                            class="starrating-star {{#on}}starrating-on{{/on}}{{^on}}starrating-off{{/on}}"
                             data-value="{{value}}" aria-label="{{label}}" title="{{label}}">
                             <i class="fa {{#on}}fa-star{{/on}}{{^on}}fa-star-o{{/on}}" aria-hidden="true"></i>
                         </button>
                     {{/feedbackform}}
                     {{^feedbackform}}
-                        <a href="{{url}}" class="filter-rating-star {{#on}}filter-rating-on{{/on}}{{^on}}filter-rating-off{{/on}}"
+                        <a href="{{url}}" class="starrating-star {{#on}}starrating-on{{/on}}{{^on}}starrating-off{{/on}}"
                             data-value="{{value}}" aria-label="{{label}}" title="{{label}}">
                             <i class="fa {{#on}}fa-star{{/on}}{{^on}}fa-star-o{{/on}}" aria-hidden="true"></i>
                         </a>
                     {{/feedbackform}}
                 {{/canrate}}
                 {{^canrate}}
-                    <span class="filter-rating-star {{#on}}filter-rating-on{{/on}}{{^on}}filter-rating-off{{/on}}"
+                    <span class="starrating-star {{#on}}starrating-on{{/on}}{{^on}}starrating-off{{/on}}"
                         data-value="{{value}}">
                         <i class="fa {{#on}}fa-star{{/on}}{{^on}}fa-star-o{{/on}}" aria-hidden="true"></i>
                     </span>
@@ -132,10 +135,10 @@
             {{/stars}}
         </span>
         {{#showaverage}}
-            <span class="filter-rating-average" data-region="average">{{averagetext}}</span>
+            <span class="starrating-average" data-region="average">{{averagetext}}</span>
         {{/showaverage}}
         {{#canclear}}
-            <a href="{{clearurl}}" class="filter-rating-clear" data-region="clear"
+            <a href="{{clearurl}}" class="starrating-clear" data-region="clear"
                 aria-label="{{clearaltlabel}}">{{clearlabel}}</a>
         {{/canclear}}
         {{#feedbackform}}

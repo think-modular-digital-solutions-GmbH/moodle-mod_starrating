@@ -12,7 +12,7 @@
     font-weight: bold;
 }
 
-.filter-rating {
+.starrating-widget {
     display: inline-flex;
     align-items: center;
     gap: 0.15rem;
@@ -23,13 +23,13 @@
  * A scale can be up to ten stars long, so the row of stars wraps rather than
  * pushing the course page sideways on a narrow screen.
  */
-.filter-rating .filter-rating-stars {
+.starrating-widget .starrating-stars {
     display: inline-flex;
     flex-wrap: wrap;
     gap: 0.1rem;
 }
 
-.filter-rating .filter-rating-star {
+.starrating-widget .starrating-star {
     display: inline-block;
     padding: 0.1rem;
     font-size: 1.15em;
@@ -43,33 +43,33 @@
  * the rating is repeated as text, so nothing depends on colour alone.
  * Both colours reach at least 3:1 against a white background.
  */
-.filter-rating .filter-rating-off {
+.starrating-widget .starrating-off {
     color: #6c757d;
 }
 
-.filter-rating .filter-rating-on {
+.starrating-widget .starrating-on {
     color: #b8860b;
 }
 
-.filter-rating a.filter-rating-star:hover,
-.filter-rating a.filter-rating-star:focus {
+.starrating-widget a.starrating-star:hover,
+.starrating-widget a.starrating-star:focus {
     color: #8a6508;
 }
 
-.filter-rating a.filter-rating-star:focus-visible,
-.filter-rating a.filter-rating-clear:focus-visible {
+.starrating-widget a.starrating-star:focus-visible,
+.starrating-widget a.starrating-clear:focus-visible {
     outline: 2px solid currentColor;
     outline-offset: 2px;
 }
 
-.filter-rating .filter-rating-average {
+.starrating-widget .starrating-average {
     margin-left: 0.4rem;
     font-size: 0.85em;
     color: #495057;
     white-space: normal;
 }
 
-.filter-rating .filter-rating-clear {
+.starrating-widget .starrating-clear {
     margin-left: 0.4rem;
     font-size: 0.85em;
 }
@@ -79,7 +79,7 @@
  * while there is nothing to withdraw, so that the Moodle app can reveal it after
  * a rating without reloading the content.
  */
-.filter-rating .filter-rating-hidden {
+.starrating-widget .starrating-hidden {
     display: none;
 }
 
@@ -87,13 +87,13 @@
  * In the app the stars are the control on the activity page, so they get a
  * touch target that clears the WCAG 2.2 target size minimum.
  */
-.filter-rating-app .filter-rating-star,
-.starrating-app-coursepage .filter-rating-star[data-value] {
+.starrating-widget-app .starrating-star,
+.starrating-app-coursepage .starrating-star[data-value] {
     padding: 0.35rem;
     font-size: 1.5em;
 }
 
-.starrating-app-coursepage .filter-rating-star[data-value] {
+.starrating-app-coursepage .starrating-star[data-value] {
     cursor: pointer;
 }
 
@@ -118,21 +118,21 @@
     text-align: center;
 }
 
-.starrating-app-coursepage .filter-rating {
+.starrating-app-coursepage .starrating-widget {
     flex-direction: column;
     align-items: center;
 }
 
-.starrating-app-coursepage .filter-rating-stars {
+.starrating-app-coursepage .starrating-stars {
     justify-content: center;
 }
 
-.starrating-app-coursepage .filter-rating-average {
+.starrating-app-coursepage .starrating-average {
     margin-left: 0;
 }
 
 /* Averages in the report sit inside table cells. */
-.filter-rating-static {
+.starrating-static {
     gap: 0.3rem;
 }
 
@@ -140,19 +140,19 @@
  * An activity that asks for text feedback renders its stars as the buttons of
  * a form. They must look exactly like the star links, not like buttons.
  */
-.filter-rating button.filter-rating-star {
+.starrating-widget button.starrating-star {
     margin: 0;
     border: 0;
     background: none;
     cursor: pointer;
 }
 
-.filter-rating button.filter-rating-star:hover,
-.filter-rating button.filter-rating-star:focus {
+.starrating-widget button.starrating-star:hover,
+.starrating-widget button.starrating-star:focus {
     color: #8a6508;
 }
 
-.filter-rating button.filter-rating-star:focus-visible {
+.starrating-widget button.starrating-star:focus-visible {
     outline: 2px solid currentColor;
     outline-offset: 2px;
 }
@@ -163,12 +163,12 @@
     min-width: 0;
 }
 
-.starrating-feedback-form .filter-rating {
+.starrating-feedback-form .starrating-widget {
     display: flex;
     flex-wrap: wrap;
 }
 
-.filter-rating .starrating-feedback {
+.starrating-widget .starrating-feedback {
     display: flex;
     flex-basis: 100%;
     flex-wrap: wrap;
@@ -177,16 +177,16 @@
     margin-top: 0.25rem;
 }
 
-.filter-rating .starrating-feedback-label {
+.starrating-widget .starrating-feedback-label {
     margin: 0;
     font-size: 0.85em;
 }
 
-.filter-rating .starrating-feedback-label {
+.starrating-widget .starrating-feedback-label {
     flex-basis: 100%;
 }
 
-.filter-rating .starrating-feedback-input {
+.starrating-widget .starrating-feedback-input {
     flex: 1 1 100%;
     max-width: 30rem;
     resize: vertical;
@@ -257,6 +257,6 @@
     outline-offset: 2px;
 }
 
-.starrating-feedback .filter-rating-hidden {
+.starrating-feedback .starrating-hidden {
     display: none;
 }

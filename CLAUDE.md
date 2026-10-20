@@ -30,6 +30,16 @@ Moodle 4.5 LTS and Moodle 5.3. Both must pass before a commit.
   request rule of `tm-general:git-workflow`. The rest of that skill still
   applies: English Conventional Commits, no attribution trailers, a releasable
   `main`.
+- **Releasing is automatic** (`.github/workflows/release.yml`, README
+  "Releasing"). Changing `$plugin->release` on `main` releases it once CI
+  passes: tag `v<release>`, GitHub Release with the `CHANGES.md` section and an
+  installable ZIP, Marketplace submission while the repository variable
+  `MARKETPLACE_RELEASE` is `true`. So a commit that changes `$plugin->release`
+  must also raise `$plugin->version` past the last release and give the release
+  its own `CHANGES.md` section, or the release job fails. Never change
+  `$plugin->release` for a change set that is not meant to ship yet.
+- **The release ZIP is `git archive`**, filtered by `.gitattributes`. A new
+  file that must not ship (tooling, notes) gets an `export-ignore` line there.
 - Moodle coding style. Language strings live in `lang/en/` and `lang/de/`,
   never inline in code; both files are kept in sync.
 - **The language file is `lang/<lang>/starrating.php`, not
@@ -96,6 +106,11 @@ Moodle 4.5 LTS and Moodle 5.3. Both must pass before a commit.
 - **Per user content goes in `starrating_cm_info_view()`, never in
   `starrating_get_coursemodule_info()`.** The latter feeds the course cache,
   which is shared between users.
+- **CSS classes are named after the plugin**: `.starrating-widget` around the
+  stars, `.starrating-star`, `.starrating-on`/`-off`, `.starrating-average`,
+  `.starrating-clear`, `.starrating-hidden`, `.starrating-static`. The old
+  `filter-rating-*` names were renamed for the Marketplace review and must not
+  come back.
 - **A rated star is `fa fa-star`, an unrated one `fa fa-star-o`.** That pair
   renders everywhere: FontAwesome 4 knows `fa-star-o` natively, FontAwesome 6
   maps it through Moodle's v4 shims (`.fa.fa-star-o` → regular family, weight

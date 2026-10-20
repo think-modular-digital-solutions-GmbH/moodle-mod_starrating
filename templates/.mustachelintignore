@@ -1,0 +1,3 @@
+# The Moodle app templates (mobile_*) are compiled by the app: they use ion-*
+# components and Angular bindings, which are not HTML5 and fail validation.
+mobile_*.mustache

@@ -17,6 +17,9 @@
 {{!
     @template mod_starrating/staticstars
 
+    @copyright  2026 Think Modular
+    @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+
     Read only star display used for averages in the report. The stars are
     decorative, the value is stated as text next to them, and there are as many
     as the scale of the activity is long.
@@ -31,13 +34,13 @@
         "label": "Average 3.8 of 5 from 12 ratings"
     }
 }}
-<span class="filter-rating filter-rating-static">
-    <span class="filter-rating-stars" aria-hidden="true">
+<span class="starrating-widget starrating-static">
+    <span class="starrating-stars" aria-hidden="true">
         {{#stars}}
-            <span class="filter-rating-star {{#on}}filter-rating-on{{/on}}{{^on}}filter-rating-off{{/on}}">
+            <span class="starrating-star {{#on}}starrating-on{{/on}}{{^on}}starrating-off{{/on}}">
                 <i class="fa {{#on}}fa-star{{/on}}{{^on}}fa-star-o{{/on}}"></i>
             </span>
         {{/stars}}
     </span>
-    <span class="filter-rating-average">{{label}}</span>
+    <span class="starrating-average">{{label}}</span>
 </span>

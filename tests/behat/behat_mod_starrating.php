@@ -55,7 +55,7 @@ class behat_mod_starrating extends behat_base {
     public function i_rate_with_stars(string $criterion, int $stars): void {
         $star = $this->find(
             'css',
-            'a.filter-rating-star[data-value="' . $stars . '"], button.filter-rating-star[data-value="' . $stars . '"]',
+            'a.starrating-star[data-value="' . $stars . '"], button.starrating-star[data-value="' . $stars . '"]',
             new ExpectationException(
                 "There is no clickable star {$stars} for \"{$criterion}\".",
                 $this->getSession()
@@ -75,7 +75,7 @@ class behat_mod_starrating extends behat_base {
     public function i_withdraw_my_rating_for(string $criterion): void {
         $link = $this->find(
             'css',
-            'a.filter-rating-clear',
+            'a.starrating-clear',
             new ExpectationException(
                 "There is no way to withdraw the rating for \"{$criterion}\".",
                 $this->getSession()
@@ -102,8 +102,8 @@ class behat_mod_starrating extends behat_base {
     public function the_star_rating_should_show(string $criterion, int $on, int $max): void {
         $widget = $this->get_widget($criterion);
 
-        $filled = count($widget->findAll('css', '.filter-rating-star i.fa-star'));
-        $empty = count($widget->findAll('css', '.filter-rating-star i.fa-star-o'));
+        $filled = count($widget->findAll('css', '.starrating-star i.fa-star'));
+        $empty = count($widget->findAll('css', '.starrating-star i.fa-star-o'));
 
         if ($filled !== $on || $filled + $empty !== $max) {
             throw new ExpectationException(
@@ -124,7 +124,7 @@ class behat_mod_starrating extends behat_base {
     public function the_star_rating_should_not_be_clickable(string $criterion): void {
         $widget = $this->get_widget($criterion);
 
-        if (count($widget->findAll('css', 'a.filter-rating-star, button.filter-rating-star'))) {
+        if (count($widget->findAll('css', 'a.starrating-star, button.starrating-star'))) {
             throw new ExpectationException(
                 "The stars for \"{$criterion}\" can be clicked, which they should not.",
                 $this->getSession()

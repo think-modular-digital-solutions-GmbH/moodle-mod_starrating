@@ -1,0 +1,5 @@
+# Left out of every release ZIP. The Marketplace release workflow and the ZIP
+# attached to each GitHub Release are built with git archive, which honours this.
+/.github         export-ignore
+/.gitattributes  export-ignore
+/CLAUDE.md       export-ignore
