@@ -2,7 +2,8 @@
 #
 # 1. tag: when the release named in version.php has no tag yet, tag that commit
 #    v<release>, and create a GitHub Release with the CHANGES.md section of that
-#    release as notes and an installable ZIP attached. See .github/scripts/tag-release.sh.
+#    release as notes and an installable ZIP attached, then move the stable
+#    branch MOODLE_XY_STABLE to it. See .github/scripts/tag-release.sh.
 # 2. marketplace: submit that version to Moodle Marketplace, through the official
 #    reusable workflow. Only while the repository variable MARKETPLACE_RELEASE is
 #    "true", and it needs the secret MOODLE_MARKETPLACE_TOKEN.

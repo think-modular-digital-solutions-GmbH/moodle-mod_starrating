@@ -35,7 +35,7 @@ activity.
   *Site administration → Notifications*:
 
   ```bash
-  git clone https://github.com/think-modular-digital-solutions-GmbH/moodle-mod_starrating.git mod/starrating
+  git clone -b MOODLE_503_STABLE https://github.com/think-modular-digital-solutions-GmbH/moodle-mod_starrating.git mod/starrating
   ```
 
 There are no steps after the installation. The activity is ready under *Add an
@@ -267,6 +267,23 @@ templates (`templates/mobile_*`) are left out of the HTML validation, through
 `templates/.mustachelintignore`, because the app compiles them as Angular
 templates.
 
+### Branches
+
+Following Moodle's convention, there is one `MOODLE_XY_STABLE` branch per range
+of Moodle versions that share the same code, named after the highest of them:
+
+| Branch | Moodle | Holds |
+| :--- | :--- | :--- |
+| `MOODLE_503_STABLE` | 4.3 to 5.3 | The latest release |
+| `main` | the same, for now | Development; every release is made from here |
+
+The release workflow moves the stable branch forward to every new release, and
+creates the next one, `MOODLE_504_STABLE` for example, as soon as a release
+raises the highest version in `$plugin->supported`. A stable branch never gets
+commits of its own; a fix for an older range goes on `main` first, or, once
+the code of the ranges has drifted apart, on that range's branch and is
+released from there by hand.
+
 ### Releasing
 
 Releases are automatic. To release, in one commit on `main`:
@@ -282,6 +299,9 @@ its notes and the installable ZIP attached, and submits the version to the
 Moodle Marketplace. It refuses, without tagging, a release that is not SemVer,
 whose `$plugin->version` is not above the previous one, or that has no section
 in `CHANGES.md`. A push that leaves `$plugin->release` alone releases nothing.
+After the release it moves `MOODLE_<highest supported>_STABLE` to it (see
+*Branches*); if it cannot, the release stands and the run shows a warning with
+the command to move the branch by hand.
 
 The Marketplace step runs only while the repository variable
 `MARKETPLACE_RELEASE` is `true`, and it needs the secret

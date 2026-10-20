@@ -38,6 +38,11 @@ Moodle 4.5 LTS and Moodle 5.3. Both must pass before a commit.
   must also raise `$plugin->version` past the last release and give the release
   its own `CHANGES.md` section, or the release job fails. Never change
   `$plugin->release` for a change set that is not meant to ship yet.
+- **Branches follow Moodle's convention.** `main` is development;
+  `MOODLE_503_STABLE` covers Moodle 4.3 to 5.3 and points at the latest
+  release. The release workflow moves it, and starts `MOODLE_<XY>_STABLE`
+  when a release raises the highest version in `$plugin->supported`. Never
+  commit to a stable branch directly while the code is the same as `main`.
 - **The release ZIP is `git archive`**, filtered by `.gitattributes`. A new
   file that must not ship (tooling, notes) gets an `export-ignore` line there.
 - Moodle coding style. Language strings live in `lang/en/` and `lang/de/`,
