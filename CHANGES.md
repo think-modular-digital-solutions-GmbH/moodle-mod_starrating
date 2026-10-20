@@ -27,6 +27,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   every deletion path of the Privacy API.
 - Behat tests for text feedback, and a `feedback` column for the
   `the following "mod_starrating > ratings" exist:` step.
+- Support for Moodle 5.3, declared as `$plugin->supported = [403, 503]`. Unit
+  tests, Behat features and the coding style check pass on Moodle 4.5 and 5.3.
 
 ### Fixed
 
@@ -37,6 +39,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   does. The stylesheet now carries a fingerprint of its own content.
 - The feedback field and its button on the app course page take the app's own
   colours for inputs and buttons, instead of dark grey browser defaults.
+- The unit tests ran into PHPUnit 11 deprecations on Moodle 5.x: they now
+  declare what they cover as attributes as well, and delete an activity through
+  the course format actions where Moodle 5.2 and later provide them.
 
 ## [2.0.0] - 2026-09-29
 

@@ -27,6 +27,7 @@ use mod_starrating\local\rating_manager;
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers     \mod_starrating\output\mobile
  */
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_starrating\output\mobile::class)]
 final class mobile_test extends \advanced_testcase {
     /**
      * Create an activity that asks for feedback, rated by a student.

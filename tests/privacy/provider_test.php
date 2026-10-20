@@ -31,6 +31,7 @@ use mod_starrating\local\rating_manager;
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers     \mod_starrating\privacy\provider
  */
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_starrating\privacy\provider::class)]
 final class provider_test extends \core_privacy\tests\provider_testcase {
     /** @var \stdClass The activity instance. */
     protected $instance;

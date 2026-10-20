@@ -26,6 +26,7 @@ use mod_starrating\local\rating_token;
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers     \mod_starrating\local\rating_token
  */
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_starrating\local\rating_token::class)]
 final class rating_token_test extends \advanced_testcase {
     /**
      * A token is accepted only for exactly the link it was generated for.

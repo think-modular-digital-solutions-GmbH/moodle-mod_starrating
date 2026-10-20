@@ -16,7 +16,10 @@ activity.
 
 ## Requirements
 
-- Moodle 4.3 or later. Developed and reviewed against Moodle 4.5 LTS.
+- Moodle 4.3 to 5.3. Tested on Moodle 4.5 LTS (PHP 8.3) and Moodle 5.3
+  (PHP 8.4, PHPUnit 11): the unit tests, the Behat features and the coding
+  style check pass on both. Moodle 4.3, 4.4, 5.0, 5.1 and 5.2 are inside the
+  supported range but have not been tested.
 - Moodle app 4.x or later for the mobile behaviour described below.
 - FontAwesome, which every Moodle theme based on Boost provides.
 
@@ -221,11 +224,18 @@ reader, and check the star colours against your theme.
 vendor/bin/phpcs --standard=moodle mod/starrating
 
 # Unit tests, after php admin/tool/phpunit/cli/init.php
-vendor/bin/phpunit --filter mod_starrating
+vendor/bin/phpunit --testsuite mod_starrating_testsuite
 
 # Acceptance tests, after php admin/tool/behat/cli/init.php
 vendor/bin/behat --config <behat_dataroot>/behatrun/behat/behat.yml --tags @mod_starrating
 ```
+
+From Moodle 5.1 on the plugin lives in `public/mod/starrating` and the test
+tool scripts in `public/admin/tool/`; `vendor/` stays in the root.
+
+The unit tests carry both `@covers` and `#[CoversClass]`, because PHPUnit 9 on
+Moodle 4.x reads the first and PHPUnit 11 on Moodle 5.x deprecates it in favour
+of the second.
 
 The Behat features in `tests/behat/` cover rating on the course page and on the
 activity page, changing and withdrawing, the scale, text feedback, both reports

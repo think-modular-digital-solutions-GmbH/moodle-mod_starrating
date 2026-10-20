@@ -27,6 +27,7 @@ use mod_starrating\local\report;
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers     \mod_starrating\local\report
  */
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_starrating\local\report::class)]
 final class report_test extends \advanced_testcase {
     /**
      * Drop the request level caches of the manager.

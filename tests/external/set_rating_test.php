@@ -32,6 +32,7 @@ require_once($CFG->dirroot . '/webservice/tests/helpers.php');
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers     \mod_starrating\external\set_rating
  */
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_starrating\external\set_rating::class)]
 final class set_rating_test extends \externallib_advanced_testcase {
     /**
      * The feedback travels with the stars, and leaving it out keeps what is stored.

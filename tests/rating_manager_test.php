@@ -27,6 +27,7 @@ use mod_starrating\local\rating_manager;
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers     \mod_starrating\local\rating_manager
  */
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_starrating\local\rating_manager::class)]
 final class rating_manager_test extends \advanced_testcase {
     /**
      * Drop the request level caches of the manager.
@@ -357,7 +358,12 @@ final class rating_manager_test extends \advanced_testcase {
         rating_manager::set_rating($context, $instance->id, 3);
 
         $this->setAdminUser();
-        course_delete_module($instance->cmid);
+        // Moodle 5.2 moved deleting an activity into the format actions.
+        if (method_exists(\core_courseformat\local\cmactions::class, 'delete')) {
+            \core_courseformat\formatactions::cm($course->id)->delete($instance->cmid);
+        } else {
+            course_delete_module($instance->cmid);
+        }
 
         $this->assertSame(0, $DB->count_records(rating_manager::TABLE, ['starratingid' => $instance->id]));
     }

@@ -16,7 +16,8 @@ subdirectory. It lives on GitHub as
 `think-modular-digital-solutions-GmbH/moodle-mod_starrating` since 2026-10-20;
 the old GitLab repository `development/moodle/rating` only says that it moved.
 
-Target: Moodle 4.3 and later, developed against Moodle 4.5 LTS.
+Target: Moodle 4.3 to 5.3 (`$plugin->supported = [403, 503]`), tested on
+Moodle 4.5 LTS and Moodle 5.3. Both must pass before a commit.
 
 ## Project conventions
 
@@ -140,10 +141,24 @@ app open plugin content natively.
 
 ## Verification
 
-**Everything can be run and must be run.** `~/Documents/behat` holds a Docker
-Moodle 4.5 that mounts this repository at `mod/starrating`, so tests and style
-checks run against the working tree. Its `README.md` has the details; the short
-version:
+**Everything can be run and must be run, on both Moodle versions.**
+
+`~/Documents/moodle53` is the shared Moodle 5.3 test environment for every
+plugin, on port 8053. This repository is listed in its `plugins.txt` and
+mounted at `public/mod/starrating`. Run its scripts from this checkout:
+
+```bash
+~/Documents/moodle53/up.sh       # once per boot, idempotent
+~/Documents/moodle53/behat.sh    # 36 acceptance scenarios, ~140 s
+~/Documents/moodle53/phpunit.sh  # 31 unit tests, ~10 s
+~/Documents/moodle53/phpcs.sh    # Moodle coding style, silence means clean
+```
+
+`~/Documents/behat` is the older Moodle 4.5 environment, on port 8000, made for
+this plugin alone. Its `env.sh` still points at `~/Documents/gitlab/starrating`,
+the name of this checkout before it moved, so prefix its scripts with
+`MOODLE_DOCKER_PLUGIN_STARRATING=~/Documents/gitlab/moodle-mod_starrating` —
+otherwise they mount an empty directory and every check passes on nothing.
 
 ```bash
 ~/Documents/behat/up.sh          # once per boot, idempotent
