@@ -47,6 +47,7 @@ class mod_starrating_generator extends testing_module_generator {
             'maxstars' => \mod_starrating\local\rating_manager::DEFAULT_MAX_STARS,
             'showaverage' => 1,
             'allowclear' => 1,
+            'allowfeedback' => 0,
         ];
 
         foreach ($defaults as $field => $value) {
@@ -64,7 +65,7 @@ class mod_starrating_generator extends testing_module_generator {
      * Goes through the manager rather than the database, so that a seeded rating
      * is indistinguishable from one somebody clicked.
      *
-     * @param array|stdClass $record Needs starratingid, userid and rating.
+     * @param array|stdClass $record Needs starratingid, userid and rating, takes an optional feedback.
      * @return stdClass The stored rating record.
      */
     public function create_rating($record): stdClass {
@@ -85,7 +86,8 @@ class mod_starrating_generator extends testing_module_generator {
             $context,
             (int) $record->starratingid,
             (int) $record->rating,
-            (int) $record->userid
+            (int) $record->userid,
+            isset($record->feedback) ? (string) $record->feedback : null
         );
 
         return $DB->get_record(\mod_starrating\local\rating_manager::TABLE, [

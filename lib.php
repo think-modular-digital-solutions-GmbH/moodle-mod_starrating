@@ -124,7 +124,7 @@ function starrating_delete_instance($id) {
 function starrating_get_coursemodule_info($coursemodule) {
     global $DB;
 
-    $fields = 'id, name, intro, introformat, maxstars, showaverage, allowclear';
+    $fields = 'id, name, intro, introformat, maxstars, showaverage, allowclear, allowfeedback';
     $instance = $DB->get_record('starrating', ['id' => $coursemodule->instance], $fields);
     if (!$instance) {
         return false;
@@ -141,6 +141,7 @@ function starrating_get_coursemodule_info($coursemodule) {
         'maxstars' => rating_manager::normalise_max_stars($instance->maxstars),
         'showaverage' => (int) $instance->showaverage,
         'allowclear' => (int) $instance->allowclear,
+        'allowfeedback' => (int) $instance->allowfeedback,
     ];
 
     return $info;

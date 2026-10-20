@@ -61,6 +61,7 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
         $this->instance = $this->getDataGenerator()->create_module('starrating', [
             'course' => $course->id,
             'name' => 'Teaching quality',
+            'allowfeedback' => 1,
         ]);
         $this->context = context_module::instance($this->instance->cmid);
 
@@ -68,7 +69,7 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
         $this->otheruser = $this->getDataGenerator()->create_and_enrol($course, 'student');
 
         $this->setUser($this->user);
-        rating_manager::set_rating($this->context, $this->instance->id, 4);
+        rating_manager::set_rating($this->context, $this->instance->id, 4, null, 'Clear and well paced');
 
         $this->setUser($this->otheruser);
         rating_manager::set_rating($this->context, $this->instance->id, 5);
@@ -117,6 +118,7 @@ final class provider_test extends \core_privacy\tests\provider_testcase {
 
         $data = $writer->get_data([]);
         $this->assertSame(4, (int) $data->rating);
+        $this->assertSame('Clear and well paced', $data->feedback);
     }
 
     /**

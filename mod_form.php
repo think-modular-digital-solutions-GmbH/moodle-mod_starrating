@@ -75,6 +75,10 @@ class mod_starrating_mod_form extends moodleform_mod {
         $mform->addHelpButton('allowclear', 'allowclear', 'mod_starrating');
         $mform->setDefault('allowclear', get_config('mod_starrating', 'allowclear'));
 
+        $mform->addElement('advcheckbox', 'allowfeedback', get_string('allowfeedback', 'mod_starrating'));
+        $mform->addHelpButton('allowfeedback', 'allowfeedback', 'mod_starrating');
+        $mform->setDefault('allowfeedback', get_config('mod_starrating', 'allowfeedback'));
+
         $this->standard_coursemodule_elements();
         $this->add_action_buttons();
     }

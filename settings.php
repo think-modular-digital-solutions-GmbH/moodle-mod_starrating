@@ -48,6 +48,13 @@ if ($ADMIN->fulltree) {
         get_string('allowclear_desc', 'mod_starrating'),
         1
     ));
+
+    $settings->add(new admin_setting_configcheckbox(
+        'mod_starrating/allowfeedback',
+        get_string('allowfeedback', 'mod_starrating'),
+        get_string('allowfeedback_desc', 'mod_starrating'),
+        0
+    ));
 }
 
 $ADMIN->add('reports', new admin_externalpage(

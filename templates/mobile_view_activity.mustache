@@ -28,6 +28,16 @@
     The params attribute is an Angular expression built in PHP, which is why it
     is a bound [params] attribute.
 
+    An activity that asks for text feedback gets a field for it inside a named
+    form. Every call-ws below names that form, and the directive adds what the
+    field holds to the parameters, so a star sends the stars and the text in one
+    call. The form is only read, never submitted, and Angular swallows its submit
+    event anyway.
+
+    The stored feedback is bound from CONTENT_OTHERDATA rather than written into
+    the template: it is user text, and the app compiles this template with
+    Angular, which would evaluate anything in it that looks like an expression.
+
     Context variables required for this template:
     * name string Name of the activity, which is the criterion
     * hasintro bool Whether a description was entered
@@ -42,6 +52,13 @@
     * cleartext string Visible text of the withdraw button
     * clearlabel string Accessible name of the withdraw button
     * successmessage string Confirmation the app shows after a rating
+    * feedbackform bool Whether the activity asks for text feedback
+    * formname string Name of the form holding the feedback field
+    * feedbackmaxlength int Longest feedback that is stored
+    * feedbacklabel string Label of the feedback field
+    * cansavefeedback bool Whether the button that saves the feedback alone is shown
+    * saveparams string Params for saving the feedback with the current rating
+    * savefeedbacklabel string Text of that button
 
     Example context (json):
     {
@@ -63,7 +80,14 @@
         "clearparams": "{cmid: 12, rating: 0}",
         "cleartext": "Withdraw",
         "clearlabel": "Withdraw your rating for Teaching quality",
-        "successmessage": "Your rating was saved."
+        "successmessage": "Your rating was saved.",
+        "feedbackform": true,
+        "formname": "starrating-feedback-12",
+        "feedbackmaxlength": 255,
+        "feedbacklabel": "Your feedback (optional)",
+        "cansavefeedback": true,
+        "saveparams": "{cmid: 12, rating: 3}",
+        "savefeedbacklabel": "Save feedback"
     }
 }}
 <div class="starrating-app">
@@ -87,6 +111,7 @@
                     <a core-site-plugins-call-ws name="mod_starrating_set_rating"
                         [params]="{{params}}"
                         [preSets]="{getFromCache: 0, saveToCache: 0}"
+                        {{#feedbackform}}form="{{formname}}"{{/feedbackform}}
                         refreshOnSuccess="true"
                         successMessage="{{successmessage}}"
                         class="filter-rating-star {{#on}}filter-rating-on{{/on}}{{^on}}filter-rating-off{{/on}}"
@@ -104,6 +129,25 @@
             {{/canrate}}
         </div>
     </ion-item>
+    {{#feedbackform}}
+        <form name="{{formname}}">
+            <ion-item class="ion-text-wrap">
+                <ion-input type="text" name="feedback" [value]="CONTENT_OTHERDATA.feedback.text" maxlength="{{feedbackmaxlength}}"
+                    label="{{feedbacklabel}}" labelPlacement="stacked"></ion-input>
+            </ion-item>
+        </form>
+        {{#cansavefeedback}}
+            <ion-item lines="none">
+                <ion-button slot="end" fill="outline" size="small"
+                    core-site-plugins-call-ws name="mod_starrating_set_rating"
+                    [params]="{{saveparams}}"
+                    [preSets]="{getFromCache: 0, saveToCache: 0}"
+                    form="{{formname}}"
+                    refreshOnSuccess="true"
+                    successMessage="{{successmessage}}">{{savefeedbacklabel}}</ion-button>
+            </ion-item>
+        {{/cansavefeedback}}
+    {{/feedbackform}}
     {{#canclear}}
         <ion-item lines="none">
             <ion-button slot="end" fill="clear" size="small"

@@ -33,6 +33,10 @@ use templatable;
  * page itself. Every star is a plain link to rate.php, which stores the rating
  * and returns to the page it was given on.
  *
+ * An activity that asks for text feedback turns the stars into the submit
+ * buttons of one form instead, so that a click on a star sends the text along
+ * with it. Rating still takes a single click and still needs no JavaScript.
+ *
  * @package    mod_starrating
  * @copyright  2026 Think Modular
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -71,6 +75,7 @@ class rating_widget implements renderable, templatable {
         $canrate = rating_manager::can_rate($context);
         $showaverage = !empty($customdata['showaverage']);
         $allowclear = !empty($customdata['allowclear']);
+        $feedbackform = $canrate && !empty($customdata['allowfeedback']);
 
         // The scale travels in the course cache, so the course page needs no
         // extra query, but a cache built before the setting existed has none.
@@ -83,7 +88,7 @@ class rating_widget implements renderable, templatable {
             $stars[] = [
                 'value' => $value,
                 'on' => $value <= $userrating,
-                'url' => $canrate ? $this->build_rate_url($value)->out(false) : null,
+                'url' => $canrate && !$feedbackform ? $this->build_rate_url($value)->out(false) : null,
                 'label' => get_string('ratestars', 'mod_starrating', (object) [
                     'stars' => $value,
                     'max' => $maxstars,
@@ -91,6 +96,8 @@ class rating_widget implements renderable, templatable {
                 ]),
             ];
         }
+
+        $userfeedback = $feedbackform ? rating_manager::get_user_feedback($this->cm->instance) : '';
 
         return [
             'cmid' => $this->cm->id,
@@ -111,7 +118,34 @@ class rating_widget implements renderable, templatable {
             'clearurl' => $canrate ? $this->build_rate_url(0)->out(false) : null,
             'clearlabel' => get_string('clearrating', 'mod_starrating'),
             'clearaltlabel' => get_string('clearratingaria', 'mod_starrating', $name),
+            'feedbackform' => $feedbackform,
+            'formaction' => (new moodle_url('/mod/starrating/rate.php'))->out(false),
+            'formparams' => $feedbackform ? $this->build_form_params() : [],
+            'feedback' => $userfeedback,
+            'feedbackmaxlength' => rating_manager::MAX_FEEDBACK_LENGTH,
+            'feedbacklabel' => get_string('feedbacklabel', 'mod_starrating'),
+            'savefeedbacklabel' => get_string('savefeedback', 'mod_starrating'),
         ];
+    }
+
+    /**
+     * The hidden fields of the feedback form.
+     *
+     * @return array List of name and value.
+     */
+    protected function build_form_params(): array {
+        global $USER;
+
+        $params = [
+            ['name' => 'id', 'value' => $this->cm->id],
+            ['name' => 'token', 'value' => rating_token::generate_for_form((int) $USER->id, (int) $this->cm->id)],
+        ];
+
+        if ($this->returnurl) {
+            $params[] = ['name' => 'returnurl', 'value' => $this->returnurl->out_as_local_url(false)];
+        }
+
+        return $params;
     }
 
     /**

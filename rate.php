@@ -17,6 +17,9 @@
 /**
  * Stores a star rating and returns to the page the rating was given on.
  *
+ * Takes a click on a star link, or the feedback form of an activity that asks
+ * for text feedback, which sends the stars and the text together.
+ *
  * @package    mod_starrating
  * @copyright  2026 Think Modular
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -32,6 +35,8 @@ $id = required_param('id', PARAM_INT);
 $rating = required_param('rating', PARAM_INT);
 $token = optional_param('token', '', PARAM_ALPHANUM);
 $returnparam = optional_param('returnurl', '', PARAM_LOCALURL);
+// Null when the request carries no feedback field, which keeps the stored text.
+$feedback = optional_param('feedback', null, PARAM_TEXT);
 
 [$course, $cm] = get_course_and_cm_from_cmid($id, 'starrating');
 require_login($course, false, $cm);
@@ -67,10 +72,17 @@ $returnurl = new moodle_url($returntarget);
 // The link itself carries the proof that the user meant it. Should the token be
 // missing or stale, for example because the course page was cached, ask for
 // confirmation rather than fail, and protect that with the session key.
-$signed = rating_token::validate($token, (int) $USER->id, (int) $cm->id, $rating);
+$signed = rating_token::validate($token, (int) $USER->id, (int) $cm->id, $rating)
+    || ($feedback !== null && rating_token::validate_for_form($token, (int) $USER->id, (int) $cm->id));
 
 if (!$signed && !confirm_sesskey()) {
-    $confirmurl = new moodle_url('/mod/starrating/rate.php', $urlparams + ['sesskey' => sesskey()]);
+    // The feedback travels with the confirmation, which posts it, but stays out
+    // of the page URL, where it could end up in logs.
+    $confirmparams = $urlparams + ['sesskey' => sesskey()];
+    if ($feedback !== null) {
+        $confirmparams['feedback'] = $feedback;
+    }
+    $confirmurl = new moodle_url('/mod/starrating/rate.php', $confirmparams);
 
     if ($rating > 0) {
         $message = get_string('confirmrating', 'mod_starrating', (object) [
@@ -88,7 +100,7 @@ if (!$signed && !confirm_sesskey()) {
     exit;
 }
 
-rating_manager::set_rating($context, (int) $cm->instance, $rating);
+rating_manager::set_rating($context, (int) $cm->instance, $rating, null, $feedback);
 
 $message = $rating > 0
     ? get_string('ratingsaved', 'mod_starrating')

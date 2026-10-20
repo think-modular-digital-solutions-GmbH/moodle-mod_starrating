@@ -45,6 +45,9 @@ class behat_mod_starrating extends behat_base {
     /**
      * Give a rating by clicking the star of that value.
      *
+     * A star is a link, or a submit button when the activity asks for text
+     * feedback. Either way it is a single click, so the step does not care.
+     *
      * @When I rate :criterion with :stars stars
      * @param string $criterion Name of the activity being rated.
      * @param int $stars Number of stars to click.
@@ -52,7 +55,7 @@ class behat_mod_starrating extends behat_base {
     public function i_rate_with_stars(string $criterion, int $stars): void {
         $star = $this->find(
             'css',
-            'a.filter-rating-star[data-value="' . $stars . '"]',
+            'a.filter-rating-star[data-value="' . $stars . '"], button.filter-rating-star[data-value="' . $stars . '"]',
             new ExpectationException(
                 "There is no clickable star {$stars} for \"{$criterion}\".",
                 $this->getSession()
@@ -121,12 +124,144 @@ class behat_mod_starrating extends behat_base {
     public function the_star_rating_should_not_be_clickable(string $criterion): void {
         $widget = $this->get_widget($criterion);
 
-        if (count($widget->findAll('css', 'a.filter-rating-star'))) {
+        if (count($widget->findAll('css', 'a.filter-rating-star, button.filter-rating-star'))) {
             throw new ExpectationException(
                 "The stars for \"{$criterion}\" can be clicked, which they should not.",
                 $this->getSession()
             );
         }
+    }
+
+    /**
+     * Type a text feedback into the field next to the stars, without sending it.
+     *
+     * @When I enter :text as my feedback for :criterion
+     * @param string $text Feedback to type.
+     * @param string $criterion Name of the activity being rated.
+     */
+    public function i_enter_as_my_feedback_for(string $text, string $criterion): void {
+        $this->get_feedback_field($criterion)->setValue($text);
+    }
+
+    /**
+     * Send the text feedback with the rating already given, without touching the stars.
+     *
+     * @When I save my feedback for :criterion
+     * @param string $criterion Name of the activity being rated.
+     */
+    public function i_save_my_feedback_for(string $criterion): void {
+        $button = $this->find_save_feedback_button($criterion);
+
+        if (!$button) {
+            throw new ExpectationException(
+                "There is no button that saves the feedback for \"{$criterion}\".",
+                $this->getSession()
+            );
+        }
+
+        $this->execute('behat_general::i_click_on', [$button, 'NodeElement']);
+    }
+
+    /**
+     * Check that the feedback cannot be saved on its own, which needs stars first.
+     *
+     * @Then I should not be able to save my feedback alone for :criterion
+     * @param string $criterion Name of the activity being rated.
+     * @throws ExpectationException
+     */
+    public function i_should_not_be_able_to_save_my_feedback_alone_for(string $criterion): void {
+        if ($this->find_save_feedback_button($criterion)) {
+            throw new ExpectationException(
+                "The feedback for \"{$criterion}\" can be saved without stars, which it should not.",
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Press Enter in the feedback field, which is what people do after typing.
+     *
+     * @When I submit my feedback for :criterion with the enter key
+     * @param string $criterion Name of the activity being rated.
+     */
+    public function i_submit_my_feedback_with_the_enter_key(string $criterion): void {
+        $this->require_javascript();
+
+        $field = $this->get_feedback_field($criterion);
+        $field->focus();
+        behat_base::type_keys($this->getSession(), [behat_keys::ENTER]);
+        $this->wait_for_pending_js();
+    }
+
+    /**
+     * Check what the feedback field holds.
+     *
+     * @Then my feedback for :criterion should be :text
+     * @param string $criterion Name of the activity being rated.
+     * @param string $text Expected feedback, empty for none.
+     * @throws ExpectationException
+     */
+    public function my_feedback_should_be(string $criterion, string $text): void {
+        $value = (string) $this->get_feedback_field($criterion)->getValue();
+
+        if ($value !== $text) {
+            throw new ExpectationException(
+                "Expected the feedback for \"{$criterion}\" to be \"{$text}\", found \"{$value}\".",
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * Check that an activity does not ask for text feedback.
+     *
+     * @Then there should be no feedback field for :criterion
+     * @param string $criterion Name of the activity being rated.
+     * @throws ExpectationException
+     */
+    public function there_should_be_no_feedback_field_for(string $criterion): void {
+        if ($this->get_widget($criterion)->find('css', 'input[name="feedback"]')) {
+            throw new ExpectationException(
+                "There is a feedback field for \"{$criterion}\", which there should not be.",
+                $this->getSession()
+            );
+        }
+    }
+
+    /**
+     * The visible button that saves the feedback with the current rating.
+     *
+     * The form also opens with an invisible submit button, the one the Enter key
+     * presses, which is hidden from assistive technology and so left out here.
+     *
+     * @param string $criterion Name of the activity being rated.
+     * @return NodeElement|null The button, null when there is none.
+     */
+    protected function find_save_feedback_button(string $criterion): ?NodeElement {
+        $label = behat_context_helper::escape(get_string('savefeedback', 'mod_starrating'));
+
+        return $this->get_widget($criterion)->find(
+            'xpath',
+            "//button[@type='submit'][not(@aria-hidden)][normalize-space(.)={$label}]"
+        );
+    }
+
+    /**
+     * The feedback field next to the stars of one criterion.
+     *
+     * @param string $criterion Name of the activity being rated.
+     * @return NodeElement The text field.
+     */
+    protected function get_feedback_field(string $criterion): NodeElement {
+        return $this->find(
+            'css',
+            'input[name="feedback"]',
+            new ExpectationException(
+                "There is no feedback field for \"{$criterion}\".",
+                $this->getSession()
+            ),
+            $this->get_widget($criterion)
+        );
     }
 
     /**

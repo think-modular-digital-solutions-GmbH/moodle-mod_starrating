@@ -52,6 +52,7 @@ class provider implements
             'starratingid' => 'privacy:metadata:starrating_rating:starratingid',
             'userid' => 'privacy:metadata:starrating_rating:userid',
             'rating' => 'privacy:metadata:starrating_rating:rating',
+            'feedback' => 'privacy:metadata:starrating_rating:feedback',
             'timecreated' => 'privacy:metadata:starrating_rating:timecreated',
             'timemodified' => 'privacy:metadata:starrating_rating:timemodified',
         ], 'privacy:metadata:starrating_rating');
@@ -139,6 +140,9 @@ class provider implements
 
             $data = helper::get_context_data($context, $contextlist->get_user());
             $data->rating = $record->rating;
+            if ((string) $record->feedback !== '') {
+                $data->feedback = $record->feedback;
+            }
             $data->timecreated = transform::datetime($record->timecreated);
             $data->timemodified = transform::datetime($record->timemodified);
 

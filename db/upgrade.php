@@ -46,5 +46,25 @@ function xmldb_starrating_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2026081804, 'starrating');
     }
 
+    if ($oldversion < 2026102000) {
+        // Activities can ask for a short text feedback along with the stars.
+        // Existing activities keep asking for stars only.
+        $table = new xmldb_table('starrating');
+        $field = new xmldb_field('allowfeedback', XMLDB_TYPE_INTEGER, '2', null, XMLDB_NOTNULL, null, '0', 'allowclear');
+
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $table = new xmldb_table('starrating_rating');
+        $field = new xmldb_field('feedback', XMLDB_TYPE_CHAR, '255', null, null, null, null, 'rating');
+
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        upgrade_mod_savepoint(true, 2026102000, 'starrating');
+    }
+
     return true;
 }

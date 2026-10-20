@@ -258,6 +258,88 @@ final class rating_manager_test extends \advanced_testcase {
     }
 
     /**
+     * The text feedback is stored with the rating, kept, replaced and removed with it.
+     *
+     * @return void
+     */
+    public function test_set_rating_stores_feedback(): void {
+        global $DB;
+
+        $this->resetAfterTest();
+
+        $course = $this->getDataGenerator()->create_course();
+        $instance = $this->getDataGenerator()->create_module('starrating', [
+            'course' => $course->id,
+            'allowfeedback' => 1,
+        ]);
+        $context = context_module::instance($instance->cmid);
+        $user = $this->getDataGenerator()->create_and_enrol($course, 'student');
+        $this->setUser($user);
+
+        $this->assertTrue(rating_manager::allows_feedback($instance->id));
+        $this->assertSame('', rating_manager::get_user_feedback($instance->id));
+
+        rating_manager::set_rating($context, $instance->id, 4, null, 'Clear and well paced');
+        $this->assertSame('Clear and well paced', rating_manager::get_user_feedback($instance->id));
+
+        // Leaving the feedback out, as a click on a course page star in the app does, keeps it.
+        rating_manager::set_rating($context, $instance->id, 2);
+        $this->assertSame(2, rating_manager::get_user_rating($instance->id));
+        $this->assertSame('Clear and well paced', rating_manager::get_user_feedback($instance->id));
+
+        // An empty feedback removes the text but keeps the stars.
+        rating_manager::set_rating($context, $instance->id, 2, null, '   ');
+        $this->assertSame(2, rating_manager::get_user_rating($instance->id));
+        $this->assertNull($DB->get_field(rating_manager::TABLE, 'feedback', ['userid' => $user->id]));
+
+        // Withdrawing the rating takes the feedback with it.
+        rating_manager::set_rating($context, $instance->id, 3, null, 'Second thoughts');
+        rating_manager::set_rating($context, $instance->id, 0, null, 'Ignored');
+        $this->assertSame('', rating_manager::get_user_feedback($instance->id));
+        $this->assertSame(0, $DB->count_records(rating_manager::TABLE, ['userid' => $user->id]));
+    }
+
+    /**
+     * An activity that does not ask for feedback stores none, whatever is sent.
+     *
+     * @return void
+     */
+    public function test_set_rating_ignores_feedback_when_not_asked_for(): void {
+        global $DB;
+
+        $this->resetAfterTest();
+
+        [$course, $instance, $context] = $this->create_activity();
+        $user = $this->getDataGenerator()->create_and_enrol($course, 'student');
+        $this->setUser($user);
+
+        $this->assertFalse(rating_manager::allows_feedback($instance->id));
+
+        rating_manager::set_rating($context, $instance->id, 4, null, 'Nobody asked');
+
+        $this->assertSame(4, rating_manager::get_user_rating($instance->id));
+        $this->assertNull($DB->get_field(rating_manager::TABLE, 'feedback', ['userid' => $user->id]));
+    }
+
+    /**
+     * Feedback is folded into one clean line and cut to length.
+     *
+     * @return void
+     */
+    public function test_normalise_feedback(): void {
+        $this->assertSame('', rating_manager::normalise_feedback(null));
+        $this->assertSame('', rating_manager::normalise_feedback("  \n\t "));
+        $this->assertSame('Two lines', rating_manager::normalise_feedback("Two\r\n  lines"));
+        $this->assertSame('bold', rating_manager::normalise_feedback('<b>bold</b>'));
+
+        $long = str_repeat('ä', rating_manager::MAX_FEEDBACK_LENGTH + 20);
+        $this->assertSame(
+            rating_manager::MAX_FEEDBACK_LENGTH,
+            \core_text::strlen(rating_manager::normalise_feedback($long))
+        );
+    }
+
+    /**
      * Deleting the activity removes its ratings.
      *
      * @return void

@@ -135,3 +135,54 @@
 .filter-rating-static {
     gap: 0.3rem;
 }
+
+/*
+ * An activity that asks for text feedback renders its stars as the buttons of
+ * a form. They must look exactly like the star links, not like buttons.
+ */
+.filter-rating button.filter-rating-star {
+    margin: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+}
+
+.filter-rating button.filter-rating-star:hover,
+.filter-rating button.filter-rating-star:focus {
+    color: #8a6508;
+}
+
+.filter-rating button.filter-rating-star:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+}
+
+/* The feedback field sits on its own line below the stars. */
+.starrating-activity .starrating-feedback-form {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.starrating-feedback-form .filter-rating {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.filter-rating .starrating-feedback {
+    display: flex;
+    flex-basis: 100%;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.25rem;
+}
+
+.filter-rating .starrating-feedback-label {
+    margin: 0;
+    font-size: 0.85em;
+}
+
+.filter-rating .starrating-feedback-input {
+    flex: 1 1 12rem;
+    max-width: 30rem;
+}

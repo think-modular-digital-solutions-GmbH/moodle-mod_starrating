@@ -68,6 +68,8 @@ class get_rating extends external_api {
             'count' => $stats->count,
             'statustext' => rating_manager::get_status_text($name, $userrating, $maxstars),
             'averagetext' => rating_manager::get_average_text($stats, $maxstars),
+            'allowfeedback' => rating_manager::allows_feedback((int) $cm->instance),
+            'feedback' => rating_manager::get_user_feedback((int) $cm->instance),
             'canrate' => rating_manager::can_rate($context),
         ];
     }
@@ -85,6 +87,8 @@ class get_rating extends external_api {
             'count' => new external_value(PARAM_INT, 'Number of ratings the average is based on'),
             'statustext' => new external_value(PARAM_TEXT, 'The rating of the user in words'),
             'averagetext' => new external_value(PARAM_TEXT, 'The average in words'),
+            'allowfeedback' => new external_value(PARAM_BOOL, 'Whether the activity asks for text feedback'),
+            'feedback' => new external_value(PARAM_TEXT, 'Text feedback the current user gave, empty when none'),
             'canrate' => new external_value(PARAM_BOOL, 'Whether the current user may rate'),
         ]);
     }

@@ -27,6 +27,11 @@ namespace mod_starrating\local;
  * Compared to a session key this is the narrower credential: even if a token
  * leaks it allows nothing but setting that one rating of that one user.
  *
+ * An activity that asks for text feedback renders its stars as the buttons of
+ * one form, which can only carry one token for all of them. That form token is
+ * bound to the user and the course module, but not to a number of stars, so it
+ * allows no more than every star token of the same page taken together.
+ *
  * @package    mod_starrating
  * @copyright  2026 Think Modular
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -61,6 +66,35 @@ class rating_token {
         }
 
         return hash_equals(self::generate($userid, $cmid, $rating), $token);
+    }
+
+    /**
+     * Sign the feedback form of one activity, valid for any number of stars.
+     *
+     * @param int $userid User the form belongs to.
+     * @param int $cmid Course module the rating belongs to.
+     * @return string The token.
+     */
+    public static function generate_for_form(int $userid, int $cmid): string {
+        $data = implode('|', [$userid, $cmid, 'form']);
+
+        return hash_hmac('sha256', $data, self::get_secret());
+    }
+
+    /**
+     * Check a token coming from a feedback form.
+     *
+     * @param string $token Token to check.
+     * @param int $userid User the form should belong to.
+     * @param int $cmid Course module the rating belongs to.
+     * @return bool
+     */
+    public static function validate_for_form(string $token, int $userid, int $cmid): bool {
+        if ($token === '') {
+            return false;
+        }
+
+        return hash_equals(self::generate_for_form($userid, $cmid), $token);
     }
 
     /**

@@ -66,6 +66,9 @@ class restore_starrating_activity_structure_step extends restore_activity_struct
         // A backup taken before the scale was configurable carries no maxstars.
         $data->maxstars = rating_manager::normalise_max_stars($data->maxstars ?? 0);
 
+        // Nor does one taken before activities could ask for text feedback.
+        $data->allowfeedback = (int) !empty($data->allowfeedback);
+
         $newitemid = $DB->insert_record('starrating', $data);
         $this->apply_activity_instance($newitemid);
 

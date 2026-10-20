@@ -54,12 +54,13 @@ class ratings_table extends table_sql {
     ) {
         parent::__construct($uniqueid);
 
-        $columns = ['coursename', 'criterion', 'fullname', 'rating', 'timemodified'];
+        $columns = ['coursename', 'criterion', 'fullname', 'rating', 'feedback', 'timemodified'];
         $headers = [
             get_string('colcourse', 'mod_starrating'),
             get_string('colcriterion', 'mod_starrating'),
             get_string('coluser', 'mod_starrating'),
             get_string('colrating', 'mod_starrating'),
+            get_string('colfeedback', 'mod_starrating'),
             get_string('coltimemodified', 'mod_starrating'),
         ];
 
@@ -74,6 +75,7 @@ class ratings_table extends table_sql {
 
         $this->sortable(true, 'timemodified', SORT_DESC);
         $this->no_sorting('fullname');
+        $this->no_sorting('feedback');
         $this->collapsible(false);
         $this->is_downloadable(true);
         $this->set_attribute('class', 'generaltable generalbox');
@@ -83,7 +85,7 @@ class ratings_table extends table_sql {
         [$where, $params] = report::get_filter_sql($courseid, $activity);
 
         $this->set_sql(
-            'r.id, r.rating, r.timemodified, r.userid, s.course AS courseid, s.name AS criterion,
+            'r.id, r.rating, r.feedback, r.timemodified, r.userid, s.course AS courseid, s.name AS criterion,
              s.maxstars, c.fullname AS coursename' . $namefields->selects,
             report::FROM . ' JOIN {user} u ON u.id = r.userid',
             $where,
@@ -147,6 +149,22 @@ class ratings_table extends table_sql {
             'stars' => (int) $row->rating,
             'max' => rating_manager::normalise_max_stars($row->maxstars),
         ]);
+    }
+
+    /**
+     * The text feedback given with the rating.
+     *
+     * @param \stdClass $row Table row.
+     * @return string
+     */
+    public function col_feedback($row) {
+        $feedback = (string) $row->feedback;
+
+        if ($this->is_downloading()) {
+            return $feedback;
+        }
+
+        return s($feedback);
     }
 
     /**

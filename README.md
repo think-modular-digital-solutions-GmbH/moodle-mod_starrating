@@ -43,9 +43,19 @@ the Moodle app opens.
 | Number of stars | 5 | How many stars people choose from, 2 to 10 |
 | Show the average | on | Shows the average and the number of ratings next to the stars |
 | Allow withdrawing a rating | on | Shows a link that removes the rating the user gave |
+| Ask for text feedback | off | Shows a one line text field below the stars for a short comment |
 
-All three defaults for new activities are set under *Site administration →
+All four defaults for new activities are set under *Site administration →
 Plugins → Activity modules → Star rating*.
+
+With *Ask for text feedback* on, people can type a line of up to 255 characters
+before they click a star, and the text is sent together with the stars — rating
+is still one click. A *Save feedback* button changes the text later without
+touching the stars, and Enter in the field does the same; before there is a
+rating, Enter does nothing, so it can never rate one star by accident. The text
+belongs to the rating: it is only stored while there are stars, and withdrawing
+the rating removes it as well. Turning the setting off hides the field but keeps
+what was already given.
 
 The scale of an activity that has already been rated can be lengthened at any
 time. It can be shortened only down to the highest rating anybody has given: a
@@ -65,8 +75,8 @@ and managers by default. It covers one course:
 
 - the average per activity, including the activities nobody has rated yet, which
   is what tells a teacher that feedback is still outstanding rather than bad;
-- every individual rating with the person who gave it, sortable, paged and
-  downloadable.
+- every individual rating with the person who gave it and the text feedback
+  that came with it, sortable, paged and downloadable.
 
 Opened from an activity it arrives filtered to that activity.
 
@@ -113,7 +123,12 @@ inside the app. No browser, and no second login.
      [params]="{cmid: 12, rating: 3}" refreshOnSuccess="true">
   ```
 
-  Tapping a star calls the web service and refreshes the page.
+  Tapping a star calls the web service and refreshes the page. An activity that
+  asks for text feedback shows the field here, inside a named form, and every
+  star names that form (`form="starrating-feedback-12"`), so the directive sends
+  the text along with the stars.
+- The field is on the activity page only. A tap on the course page sends the
+  stars alone, which keeps whatever feedback is stored.
 
 So in the app rating is one tap on the course page, the same as one click on the
 web, and the activity page is there for anyone who opens it.
@@ -135,7 +150,7 @@ one.
 
 | Function | Type | Purpose |
 | :--- | :--- | :--- |
-| `mod_starrating_set_rating` | write | Store the rating of the current user for an activity |
+| `mod_starrating_set_rating` | write | Store the rating of the current user for an activity, optionally with a text feedback |
 | `mod_starrating_get_rating` | read | Read the current user rating, the average and the number of ratings |
 
 Both are part of the official mobile service and flagged for AJAX.
@@ -149,6 +164,11 @@ the course module and that one number of stars
 (`\mod_starrating\local\rating_token`). A leaked link allows nothing but
 setting that one rating of that one user.
 
+An activity that asks for text feedback renders its stars as the submit buttons
+of one `POST` form, which can carry only one token for all of them. That token
+is bound to the user and the course module but to no number of stars, so it
+allows no more than all the star links of the same page taken together.
+
 If the signature is missing or stale the endpoint does not fail, it asks for
 confirmation, and that confirmation is a `POST` protected by the session key.
 Return URLs are cleaned with `PARAM_LOCALURL`, so the endpoint cannot be used as
@@ -156,8 +176,10 @@ an open redirect.
 
 ## Data protection
 
-Stored per rating: the user, the activity, the number of stars and the
-timestamps. Nothing leaves the Moodle site.
+Stored per rating: the user, the activity, the number of stars, the text
+feedback if the activity asks for one, and the timestamps. Nothing leaves the
+Moodle site. The feedback is free text, so people can write anything into it,
+personal data included; it is kept out of URLs and of the event log.
 
 A full Privacy API provider is implemented, so ratings are included in data
 exports and are removed by deletion requests — per user, per activity, and for
@@ -180,6 +202,8 @@ Built against WCAG 2.2 AA:
   carried by shape and not by colour. It is repeated as visually hidden text.
   The star colours reach at least 3:1 against a white background.
 - In the app the stars have a touch target above the WCAG 2.2 minimum.
+- The feedback field has a visible label, and pressing Enter in it never
+  submits a rating the user did not choose.
 
 This has not been verified with assistive technology or with users. Before
 rolling it out, have the widget checked by someone testing with a screen
@@ -193,9 +217,16 @@ vendor/bin/phpcs --standard=moodle mod/starrating
 
 # Unit tests, after php admin/tool/phpunit/cli/init.php
 vendor/bin/phpunit --filter mod_starrating
+
+# Acceptance tests, after php admin/tool/behat/cli/init.php
+vendor/bin/behat --config <behat_dataroot>/behatrun/behat/behat.yml --tags @mod_starrating
 ```
 
-Neither could be run in the environment this plugin was written in.
+The Behat features in `tests/behat/` cover rating on the course page and on the
+activity page, changing and withdrawing, the scale, text feedback, both reports
+and the read only display. Ratings can be seeded with
+`the following "mod_starrating > ratings" exist:`, including a `feedback`
+column.
 
 ## License
 

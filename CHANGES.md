@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-10-20
+
+### Added
+
+- **Activities can ask for a short text feedback along with the stars.** A new
+  per activity setting, *Ask for text feedback*, off by default and with a site
+  wide default, shows a one line text field below the stars. The text is sent
+  with the click on a star, so rating is still a single click, and a *Save
+  feedback* button changes it later without touching the stars. Feedback is
+  only stored together with a rating and is removed when the rating is
+  withdrawn. Works on the course page, on the activity page and on the activity
+  page of the Moodle app.
+- The course report and *Star ratings by user* show the feedback next to each
+  rating, and include it in downloads.
+- `mod_starrating_set_rating` takes an optional `feedback`, and both rating web
+  services return `allowfeedback` and the `feedback` of the current user.
+- The feedback is covered by backup and restore, by the data export and by
+  every deletion path of the Privacy API.
+- Behat tests for text feedback, and a `feedback` column for the
+  `the following "mod_starrating > ratings" exist:` step.
+
+## [2.0.0] - 2026-09-29
+
 ### Added
 
 - Behat tests covering what the plugin promises: rating with a single click on
@@ -15,60 +38,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   given, the course report and the site wide report including the mixed scale
   average, and read only stars for everybody who may not rate. A data generator
   step seeds ratings, `the following "mod_starrating > ratings" exist:`.
-
-### Changed
-
-- **The plugin is now an activity, not a text filter.** Star ratings are added
-  through *Add an activity or resource → Star rating*, and the name of the
-  activity is what is being rated. The `{{ rating:criterion }}` token is gone.
-  This is what finally makes rating work in the Moodle app: the app opens an
-  activity natively, which it could never do for a link inside filtered text.
-- The stars appear directly on the course page, the way a label shows its text,
-  so rating is still a single click without opening anything.
-- The report is now two pages, *Star rating averages* and *Star ratings by
-  user*, instead of one page holding both. The filter carries over between
-  them.
-- **The number of stars is no longer fixed at five.** It is a per activity
-  setting between 2 and 10, with a site wide default. Existing activities keep
-  their five stars.
-- Averages over a selection that mixes activities with scales of different
-  lengths are reported as a share of the scale instead of as stars, because four
-  of five and eight of ten are the same judgement and adding them up as stars
-  would not be. Rows on a single scale are unchanged.
-- *Star rating averages* now opens grouped per course, with the number of
-  ratings and the average of each, and every course name links to the star
-  rating report of that course instead of to the course page. Viewers who may
-  not see a course report still get the course page.
-- The course overview page and the course report show the length of each scale,
-  and the individual ratings say which scale each rating was given on.
-
-### Fixed
-
-- Every Moodle coding style violation the plugin had: 87 errors and 7 warnings
-  reported by `phpcs --standard=moodle` are gone, among them unnecessary
-  `MOODLE_INTERNAL` checks, blank lines after a class brace, multi-line calls
-  and declarations, undocumented promoted constructor properties, the order of
-  the privacy interfaces and of the language strings.
-- In the Moodle app the course page showed no activity name, a module icon that
-  said nothing, and the average crammed next to the stars. The name, the stars
-  and the average are now stacked and centred, and the icon is gone.
-- Rating in the Moodle app took two taps and went through the activity page,
-  and the stars on the course page never updated afterwards. One tap on a star
-  on the course page now saves the rating and repaints the stars on the spot,
-  without opening the activity.
-- The activity could not be opened at all, on the web or in the app, because it
-  declared that it has no view link. That also stopped the Moodle app from
-  rating: the app can only submit from the activity page, which it could never
-  reach. The activity name on the course page is a link again.
-- The rating web services validated the activity context only after building
-  course module information for the user, which can fail with a login error
-  instead of a clean permission error when called from the app.
-- Installation failed with `plugin_defective_exception`. An activity module's
-  language file must be named after the module directory, not after the
-  frankenstyle component, so it is now `lang/en/starrating.php`.
-
-### Added
-
 - **A course report for teachers**, *Star ratings* in the course menu and in the
   menu of every star rating activity. It lists the average per activity of the
   course, including activities nobody has rated yet, and every individual rating
@@ -104,11 +73,62 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `mod/starrating:viewreports`.
 - German translation.
 
+### Changed
+
+- **The plugin is now an activity, not a text filter.** Star ratings are added
+  through *Add an activity or resource → Star rating*, and the name of the
+  activity is what is being rated. The `{{ rating:criterion }}` token is gone.
+  This is what finally makes rating work in the Moodle app: the app opens an
+  activity natively, which it could never do for a link inside filtered text.
+- The stars appear directly on the course page, the way a label shows its text,
+  so rating is still a single click without opening anything.
+- The report is now two pages, *Star rating averages* and *Star ratings by
+  user*, instead of one page holding both. The filter carries over between
+  them.
+- **The number of stars is no longer fixed at five.** It is a per activity
+  setting between 2 and 10, with a site wide default. Existing activities keep
+  their five stars.
+- Averages over a selection that mixes activities with scales of different
+  lengths are reported as a share of the scale instead of as stars, because four
+  of five and eight of ten are the same judgement and adding them up as stars
+  would not be. Rows on a single scale are unchanged.
+- *Star rating averages* now opens grouped per course, with the number of
+  ratings and the average of each, and every course name links to the star
+  rating report of that course instead of to the course page. Viewers who may
+  not see a course report still get the course page.
+- The course overview page and the course report show the length of each scale,
+  and the individual ratings say which scale each rating was given on.
+
 ### Removed
 
 - The `filter_rating` text filter, its token parsing and the criterion registry
   it needed. The filter is not upgraded to the activity; it has to be
   uninstalled, and its ratings do not carry over.
+
+### Fixed
+
+- Every Moodle coding style violation the plugin had: 87 errors and 7 warnings
+  reported by `phpcs --standard=moodle` are gone, among them unnecessary
+  `MOODLE_INTERNAL` checks, blank lines after a class brace, multi-line calls
+  and declarations, undocumented promoted constructor properties, the order of
+  the privacy interfaces and of the language strings.
+- In the Moodle app the course page showed no activity name, a module icon that
+  said nothing, and the average crammed next to the stars. The name, the stars
+  and the average are now stacked and centred, and the icon is gone.
+- Rating in the Moodle app took two taps and went through the activity page,
+  and the stars on the course page never updated afterwards. One tap on a star
+  on the course page now saves the rating and repaints the stars on the spot,
+  without opening the activity.
+- The activity could not be opened at all, on the web or in the app, because it
+  declared that it has no view link. That also stopped the Moodle app from
+  rating: the app can only submit from the activity page, which it could never
+  reach. The activity name on the course page is a link again.
+- The rating web services validated the activity context only after building
+  course module information for the user, which can fail with a login error
+  instead of a clean permission error when called from the app.
+- Installation failed with `plugin_defective_exception`. An activity module's
+  language file must be named after the module directory, not after the
+  frankenstyle component, so it is now `lang/en/starrating.php`.
 
 ### Security
 

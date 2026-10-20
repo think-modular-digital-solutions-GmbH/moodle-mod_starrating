@@ -42,6 +42,13 @@ class set_rating extends external_api {
                 PARAM_INT,
                 'Number of stars, 1 to the maximum of the activity, or 0 to withdraw the rating'
             ),
+            'feedback' => new external_value(
+                PARAM_TEXT,
+                'Text feedback to store with the rating, empty to remove it, left out to keep what is stored. '
+                    . 'Ignored unless the activity asks for feedback',
+                VALUE_DEFAULT,
+                null
+            ),
         ]);
     }
 
@@ -50,12 +57,14 @@ class set_rating extends external_api {
      *
      * @param int $cmid Course module id.
      * @param int $rating Number of stars, 0 to withdraw.
+     * @param string|null $feedback Text feedback, null to keep what is stored.
      * @return array Result as described by execute_returns().
      */
-    public static function execute(int $cmid, int $rating): array {
+    public static function execute(int $cmid, int $rating, ?string $feedback = null): array {
         $params = self::validate_parameters(self::execute_parameters(), [
             'cmid' => $cmid,
             'rating' => $rating,
+            'feedback' => $feedback,
         ]);
 
         // A plain lookup first: the context has to be validated before anything
@@ -65,7 +74,7 @@ class set_rating extends external_api {
         self::validate_context($context);
         rating_manager::require_can_rate($context);
 
-        rating_manager::set_rating($context, (int) $cm->instance, $params['rating']);
+        rating_manager::set_rating($context, (int) $cm->instance, $params['rating'], null, $params['feedback']);
 
         $stats = rating_manager::get_stats((int) $cm->instance);
         $userrating = rating_manager::get_user_rating((int) $cm->instance);
@@ -79,6 +88,8 @@ class set_rating extends external_api {
             'count' => $stats->count,
             'statustext' => rating_manager::get_status_text($name, $userrating, $maxstars),
             'averagetext' => rating_manager::get_average_text($stats, $maxstars),
+            'allowfeedback' => rating_manager::allows_feedback((int) $cm->instance),
+            'feedback' => rating_manager::get_user_feedback((int) $cm->instance),
             'message' => $params['rating'] > 0
                 ? get_string('ratingsaved', 'mod_starrating')
                 : get_string('ratingcleared', 'mod_starrating'),
@@ -98,6 +109,8 @@ class set_rating extends external_api {
             'count' => new external_value(PARAM_INT, 'Number of ratings the average is based on'),
             'statustext' => new external_value(PARAM_TEXT, 'The rating of the user in words'),
             'averagetext' => new external_value(PARAM_TEXT, 'The average in words'),
+            'allowfeedback' => new external_value(PARAM_BOOL, 'Whether the activity asks for text feedback'),
+            'feedback' => new external_value(PARAM_TEXT, 'Text feedback the current user gave, empty when none'),
             'message' => new external_value(PARAM_TEXT, 'Confirmation message for the user'),
         ]);
     }

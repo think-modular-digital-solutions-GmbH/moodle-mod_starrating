@@ -40,17 +40,20 @@ class rating_manager {
     /** @var int Scale an activity uses when nothing else is configured. */
     public const DEFAULT_MAX_STARS = 5;
 
+    /** @var int Longest text feedback that is stored with a rating, in characters. */
+    public const MAX_FEEDBACK_LENGTH = 255;
+
     /** @var string Table holding the ratings. */
     public const TABLE = 'starrating_rating';
 
-    /** @var array<string, int> Request level cache of user ratings, keyed by activity and user. */
+    /** @var array<string, stdClass|false> Request level cache of user ratings, keyed by activity and user. */
     protected static array $userratings = [];
 
     /** @var array<int, stdClass> Request level cache of statistics, keyed by activity. */
     protected static array $stats = [];
 
-    /** @var array<int, int> Request level cache of scale lengths, keyed by activity. */
-    protected static array $maxstars = [];
+    /** @var array<int, stdClass> Request level cache of the settings of an activity, keyed by activity. */
+    protected static array $settings = [];
 
     /**
      * The scale lengths an activity may be configured with.
@@ -98,14 +101,55 @@ class rating_manager {
      * @return int
      */
     public static function get_max_stars(int $starratingid): int {
+        return self::get_settings($starratingid)->maxstars;
+    }
+
+    /**
+     * Whether an activity asks for a short text feedback along with the stars.
+     *
+     * @param int $starratingid Activity instance id.
+     * @return bool
+     */
+    public static function allows_feedback(int $starratingid): bool {
+        return self::get_settings($starratingid)->allowfeedback;
+    }
+
+    /**
+     * The settings of one activity that decide what a rating may hold.
+     *
+     * @param int $starratingid Activity instance id.
+     * @return stdClass Object with the int property maxstars and the bool property allowfeedback.
+     */
+    protected static function get_settings(int $starratingid): stdClass {
         global $DB;
 
-        if (!array_key_exists($starratingid, self::$maxstars)) {
-            $stored = $DB->get_field('starrating', 'maxstars', ['id' => $starratingid]);
-            self::$maxstars[$starratingid] = self::normalise_max_stars($stored);
+        if (!array_key_exists($starratingid, self::$settings)) {
+            $stored = $DB->get_record('starrating', ['id' => $starratingid], 'maxstars, allowfeedback');
+
+            self::$settings[$starratingid] = (object) [
+                'maxstars' => self::normalise_max_stars($stored->maxstars ?? 0),
+                'allowfeedback' => !empty($stored->allowfeedback),
+            ];
         }
 
-        return self::$maxstars[$starratingid];
+        return self::$settings[$starratingid];
+    }
+
+    /**
+     * Force a text feedback coming from a form or a web service into shape.
+     *
+     * The feedback is a single short line, so line breaks are folded into
+     * spaces, and anything beyond the maximum length is cut off rather than
+     * refused, because the stars it came with are worth keeping.
+     *
+     * @param string|null $feedback The feedback as submitted.
+     * @return string The feedback to store, empty for none.
+     */
+    public static function normalise_feedback(?string $feedback): string {
+        $feedback = clean_param((string) $feedback, PARAM_TEXT);
+        $feedback = trim(preg_replace('/\s+/u', ' ', $feedback));
+
+        return \core_text::substr($feedback, 0, self::MAX_FEEDBACK_LENGTH);
     }
 
     /**
@@ -156,19 +200,54 @@ class rating_manager {
      * @return int Number of stars, 0 when the user has not rated yet.
      */
     public static function get_user_rating(int $starratingid, ?int $userid = null): int {
-        global $DB, $USER;
+        global $USER;
 
         $userid = $userid ?? (int) $USER->id;
         if (empty($userid) || isguestuser($userid)) {
             return 0;
         }
 
+        $record = self::get_user_record($starratingid, $userid);
+
+        return $record ? (int) $record->rating : 0;
+    }
+
+    /**
+     * The text feedback a user gave along with their rating.
+     *
+     * @param int $starratingid Activity instance id.
+     * @param int|null $userid Defaults to the current user.
+     * @return string The feedback, empty when there is none.
+     */
+    public static function get_user_feedback(int $starratingid, ?int $userid = null): string {
+        global $USER;
+
+        $userid = $userid ?? (int) $USER->id;
+        if (empty($userid) || isguestuser($userid)) {
+            return '';
+        }
+
+        $record = self::get_user_record($starratingid, $userid);
+
+        return $record ? (string) $record->feedback : '';
+    }
+
+    /**
+     * The stored rating of a user, read once per request.
+     *
+     * @param int $starratingid Activity instance id.
+     * @param int $userid The user.
+     * @return stdClass|false The rating record, false when the user has not rated.
+     */
+    protected static function get_user_record(int $starratingid, int $userid) {
+        global $DB;
+
         $key = $starratingid . ':' . $userid;
         if (!array_key_exists($key, self::$userratings)) {
-            self::$userratings[$key] = (int) $DB->get_field(self::TABLE, 'rating', [
+            self::$userratings[$key] = $DB->get_record(self::TABLE, [
                 'starratingid' => $starratingid,
                 'userid' => $userid,
-            ]);
+            ], 'id, rating, feedback');
         }
 
         return self::$userratings[$key];
@@ -202,17 +281,34 @@ class rating_manager {
     /**
      * Store the rating of a user, replacing any earlier rating.
      *
+     * The text feedback belongs to the rating: it is only stored while there
+     * are stars to go with it, and withdrawing the rating removes it too.
+     *
      * @param context $context Context of the activity.
      * @param int $starratingid Activity instance id.
      * @param int $rating Number of stars, 1 to the scale length of the activity, or 0 to withdraw the rating.
      * @param int|null $userid Defaults to the current user.
+     * @param string|null $feedback Text feedback, empty to remove it, null to keep what is stored. Ignored
+     *                              unless the activity asks for feedback.
      * @return int The stored rating.
      */
-    public static function set_rating(context $context, int $starratingid, int $rating, ?int $userid = null): int {
+    public static function set_rating(
+        context $context,
+        int $starratingid,
+        int $rating,
+        ?int $userid = null,
+        ?string $feedback = null
+    ): int {
         global $DB, $USER;
 
         $userid = $userid ?? (int) $USER->id;
         $maxstars = self::get_max_stars($starratingid);
+
+        if ($feedback !== null && self::allows_feedback($starratingid)) {
+            $feedback = self::normalise_feedback($feedback);
+        } else {
+            $feedback = null;
+        }
 
         if ($rating < 0 || $rating > $maxstars) {
             throw new \moodle_exception('invalidrating', 'mod_starrating', '', $maxstars);
@@ -228,11 +324,15 @@ class rating_manager {
             }
         } else if ($existing) {
             $existing->rating = $rating;
+            if ($feedback !== null) {
+                $existing->feedback = $feedback === '' ? null : $feedback;
+            }
             $existing->timemodified = $now;
             $DB->update_record(self::TABLE, $existing);
         } else {
             $record = (object) $conditions;
             $record->rating = $rating;
+            $record->feedback = $feedback === null || $feedback === '' ? null : $feedback;
             $record->timecreated = $now;
             $record->timemodified = $now;
             $DB->insert_record(self::TABLE, $record);
@@ -298,6 +398,6 @@ class rating_manager {
     public static function reset_caches(): void {
         self::$userratings = [];
         self::$stats = [];
-        self::$maxstars = [];
+        self::$settings = [];
     }
 }

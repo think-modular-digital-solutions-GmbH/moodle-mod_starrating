@@ -24,6 +24,13 @@
     again on the activity page. Every star is a real link, so rating works
     without JavaScript.
 
+    An activity that asks for text feedback renders the stars as the submit
+    buttons of one form instead, so a click on a star sends the text with it.
+    The first submit button of a form is what the Enter key in the text field
+    presses, so the form opens with an invisible one that saves the feedback
+    with the current rating, and that is disabled while there is no rating:
+    Enter must never rate one star by accident.
+
     A rated star is fa-star, an unrated one fa-star-o. Both render on every
     FontAwesome version Moodle has shipped, the v4 shims mapping fa-star-o to
     the regular family.
@@ -46,6 +53,13 @@
     * clearurl string Link that withdraws the rating
     * clearlabel string Visible text of the withdraw link
     * clearaltlabel string Accessible name of the withdraw link
+    * feedbackform bool Whether the stars are a form that sends text feedback
+    * formaction string Where the feedback form posts to
+    * formparams array List of name and value of the hidden form fields
+    * feedback string Feedback the current user gave
+    * feedbackmaxlength int Longest feedback that is stored
+    * feedbacklabel string Label of the feedback field
+    * savefeedbacklabel string Text of the button that saves the feedback alone
 
     Example context (json):
     {
@@ -71,7 +85,14 @@
         "canclear": true,
         "clearurl": "#",
         "clearlabel": "Withdraw",
-        "clearaltlabel": "Withdraw your rating for Teaching quality"
+        "clearaltlabel": "Withdraw your rating for Teaching quality",
+        "feedbackform": false,
+        "formaction": "#",
+        "formparams": [],
+        "feedback": "",
+        "feedbackmaxlength": 255,
+        "feedbacklabel": "Your feedback (optional)",
+        "savefeedbacklabel": "Save feedback"
     }
 }}
 <div class="starrating-activity" data-cmid="{{cmid}}" data-userrating="{{userrating}}"
@@ -79,15 +100,32 @@
     {{#showname}}
         <span class="starrating-name">{{name}}</span>
     {{/showname}}
+    {{#feedbackform}}
+    <form method="post" action="{{formaction}}" class="starrating-feedback-form">
+        {{#formparams}}
+            <input type="hidden" name="{{name}}" value="{{value}}">
+        {{/formparams}}
+        <button type="submit" name="rating" value="{{userrating}}" class="sr-only visually-hidden"
+            tabindex="-1" aria-hidden="true"{{^userrating}} disabled{{/userrating}}>{{savefeedbacklabel}}</button>
+    {{/feedbackform}}
     <span class="filter-rating" role="group" aria-label="{{grouplabel}}">
         <span class="sr-only visually-hidden" data-region="status">{{statustext}}</span>
         <span class="filter-rating-stars" data-region="stars">
             {{#stars}}
                 {{#canrate}}
-                    <a href="{{url}}" class="filter-rating-star {{#on}}filter-rating-on{{/on}}{{^on}}filter-rating-off{{/on}}"
-                        data-value="{{value}}" aria-label="{{label}}" title="{{label}}">
-                        <i class="fa {{#on}}fa-star{{/on}}{{^on}}fa-star-o{{/on}}" aria-hidden="true"></i>
-                    </a>
+                    {{#feedbackform}}
+                        <button type="submit" name="rating" value="{{value}}"
+                            class="filter-rating-star {{#on}}filter-rating-on{{/on}}{{^on}}filter-rating-off{{/on}}"
+                            data-value="{{value}}" aria-label="{{label}}" title="{{label}}">
+                            <i class="fa {{#on}}fa-star{{/on}}{{^on}}fa-star-o{{/on}}" aria-hidden="true"></i>
+                        </button>
+                    {{/feedbackform}}
+                    {{^feedbackform}}
+                        <a href="{{url}}" class="filter-rating-star {{#on}}filter-rating-on{{/on}}{{^on}}filter-rating-off{{/on}}"
+                            data-value="{{value}}" aria-label="{{label}}" title="{{label}}">
+                            <i class="fa {{#on}}fa-star{{/on}}{{^on}}fa-star-o{{/on}}" aria-hidden="true"></i>
+                        </a>
+                    {{/feedbackform}}
                 {{/canrate}}
                 {{^canrate}}
                     <span class="filter-rating-star {{#on}}filter-rating-on{{/on}}{{^on}}filter-rating-off{{/on}}"
@@ -104,5 +142,19 @@
             <a href="{{clearurl}}" class="filter-rating-clear" data-region="clear"
                 aria-label="{{clearaltlabel}}">{{clearlabel}}</a>
         {{/canclear}}
+        {{#feedbackform}}
+            <span class="starrating-feedback" data-region="feedback">
+                <label for="starrating-feedback-{{cmid}}" class="starrating-feedback-label">{{feedbacklabel}}</label>
+                <input type="text" id="starrating-feedback-{{cmid}}" name="feedback" value="{{feedback}}"
+                    maxlength="{{feedbackmaxlength}}" class="form-control form-control-sm starrating-feedback-input">
+                {{#userrating}}
+                    <button type="submit" name="rating" value="{{userrating}}"
+                        class="btn btn-secondary btn-sm">{{savefeedbacklabel}}</button>
+                {{/userrating}}
+            </span>
+        {{/feedbackform}}
     </span>
+    {{#feedbackform}}
+    </form>
+    {{/feedbackform}}
 </div>

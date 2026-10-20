@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="mod/starrating/db" VERSION="20260818" COMMENT="XMLDB file for the star rating activity."
+<XMLDB PATH="mod/starrating/db" VERSION="20261020" COMMENT="XMLDB file for the star rating activity."
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
@@ -14,6 +14,7 @@
         <FIELD NAME="maxstars" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="5" SEQUENCE="false" COMMENT="Length of the rating scale, 2 to 10 stars."/>
         <FIELD NAME="showaverage" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="1" SEQUENCE="false" COMMENT="Whether the average is shown next to the stars."/>
         <FIELD NAME="allowclear" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="1" SEQUENCE="false" COMMENT="Whether users may withdraw their rating."/>
+        <FIELD NAME="allowfeedback" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Whether users may add a short text feedback to their rating."/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
       </FIELDS>
@@ -28,6 +29,7 @@
         <FIELD NAME="starratingid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="The activity that was rated."/>
         <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="User who submitted the rating."/>
         <FIELD NAME="rating" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Number of stars given, 1 to the maxstars of the activity."/>
+        <FIELD NAME="feedback" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="Short text feedback given with the rating, if the activity asks for it."/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
       </FIELDS>

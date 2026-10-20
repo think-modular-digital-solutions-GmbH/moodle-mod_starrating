@@ -68,6 +68,9 @@ class mobile {
      * core-site-plugins-call-ws directive and submit without any JavaScript of
      * ours and without leaving the app.
      *
+     * An activity that asks for text feedback adds a field for it. The directive
+     * reads that field from its form by name, so every star sends the text along.
+     *
      * @param array $args Arguments passed by the app, expects cmid.
      * @return array Content for the app.
      */
@@ -86,6 +89,7 @@ class mobile {
         $stats = rating_manager::get_stats((int) $cm->instance);
         $canrate = rating_manager::can_rate($context);
         $maxstars = rating_manager::normalise_max_stars($instance->maxstars);
+        $feedbackform = $canrate && !empty($instance->allowfeedback);
 
         $stars = [];
         for ($value = 1; $value <= $maxstars; $value++) {
@@ -114,12 +118,28 @@ class mobile {
             'cleartext' => get_string('clearrating', 'mod_starrating'),
             'clearlabel' => get_string('clearratingaria', 'mod_starrating', $name),
             'successmessage' => get_string('ratingsaved', 'mod_starrating'),
+            'feedbackform' => $feedbackform,
+            'formname' => 'starrating-feedback-' . $cm->id,
+            'feedbackmaxlength' => rating_manager::MAX_FEEDBACK_LENGTH,
+            'feedbacklabel' => get_string('feedbacklabel', 'mod_starrating'),
+            'cansavefeedback' => $feedbackform && $userrating > 0,
+            'saveparams' => self::build_params((int) $cm->id, $userrating),
+            'savefeedbacklabel' => get_string('savefeedback', 'mod_starrating'),
         ]);
+
+        // The feedback is text the user typed, and the app compiles the template
+        // with Angular, so it must never be part of the template, where {{ }}
+        // would be evaluated. It travels as data and is bound to the field. As a
+        // JSON object, because the app parses any value starting with { or [.
+        $otherdata = '';
+        if ($feedbackform) {
+            $otherdata = ['feedback' => json_encode(['text' => rating_manager::get_user_feedback((int) $cm->instance)])];
+        }
 
         return [
             'templates' => [['id' => 'main', 'html' => $html]],
             'javascript' => '',
-            'otherdata' => '',
+            'otherdata' => $otherdata,
         ];
     }
 

@@ -12,7 +12,9 @@ and a site wide report over all ratings.
 
 **The repository root is the plugin root.** It is deployed to `mod/starrating/`
 inside a Moodle installation, so `version.php` sits at the top level, not in a
-subdirectory. The repository is still called `rating`; the plugin is not.
+subdirectory. It lives on GitHub as
+`think-modular-digital-solutions-GmbH/moodle-mod_starrating` since 2026-10-20;
+the old GitLab repository `development/moodle/rating` only says that it moved.
 
 Target: Moodle 4.3 and later, developed against Moodle 4.5 LTS.
 
@@ -101,6 +103,23 @@ Target: Moodle 4.3 and later, developed against Moodle 4.5 LTS.
 - **Any URL handed to the app must be absolute** (`$url->out(false)`), never
   `out_as_local_url()`: `CoreUrl.toAbsoluteURL()` drops the parent path for URLs
   starting with `/`, which 404s on a Moodle in a subdirectory.
+- **Text feedback turns the stars into the submit buttons of one `POST`
+  form** (`allowfeedback`), so the text travels with the click on a star and
+  rating stays one click. A form carries one token for all its buttons, so it
+  is signed with `rating_token::generate_for_form()`, bound to user and course
+  module but not to a number of stars.
+- **That form opens with an invisible, disabled-until-rated submit button.**
+  Enter in a text field presses the first submit button of its form, which
+  would otherwise be star 1. Do not remove it or move the stars before it.
+- **Feedback belongs to the rating.** `set_rating()` takes `null` to keep the
+  stored text (the app course page sends stars only), `''` to remove it, and
+  ignores it when the activity does not ask for feedback. Withdrawing the
+  rating removes the text.
+- **In the app the feedback is bound from `CONTENT_OTHERDATA`, never written
+  into the template.** The app compiles site plugin templates with Angular, so
+  user text containing `{{ }}` would be evaluated. It is JSON wrapped
+  (`{"text": ...}`) because the app parses any otherdata value starting with
+  `{` or `[`. The stars read the field through call-ws `form="..."`.
 
 ## History worth knowing
 
@@ -118,8 +137,8 @@ version:
 
 ```bash
 ~/Documents/behat/up.sh          # once per boot, idempotent
-~/Documents/behat/behat.sh       # 23 acceptance scenarios, ~75 s
-~/Documents/behat/phpunit.sh     # 25 unit tests, ~7 s
+~/Documents/behat/behat.sh       # 37 acceptance scenarios, ~100 s
+~/Documents/behat/phpunit.sh     # 29 unit tests, ~7 s
 ~/Documents/behat/phpcs.sh       # Moodle coding style, silence means clean
 ```
 
