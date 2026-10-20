@@ -38,6 +38,11 @@ defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
 
+// The app downloads the stylesheet again only when this number changes. The
+// plugin version changes only with an upgrade, so a change to styles.css alone
+// never reached the app. A fingerprint of the file changes with every edit.
+$stylesversion = hexdec(substr((string) sha1_file($CFG->dirroot . '/mod/starrating/styles.css'), 0, 7));
+
 $addons = [
     'mod_starrating' => [
         'handlers' => [
@@ -54,7 +59,7 @@ $addons = [
                 ],
                 'styles' => [
                     'url' => $CFG->wwwroot . '/mod/starrating/styles.css',
-                    'version' => (int) get_config('mod_starrating', 'version'),
+                    'version' => (int) $stylesversion,
                 ],
                 'ptrenabled' => true,
             ],

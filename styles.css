@@ -194,8 +194,10 @@
 
 /*
  * The feedback on the app course page sits outside the stars, centred under
- * them like the rest of the card. The app has no Bootstrap, so the field and
- * its button are styled here, from the app's own colours where it has them.
+ * them like the rest of the card. The app styles no plain form controls, which
+ * then fall back to the browser defaults, dark grey in dark mode. So the field
+ * and its button take the app's own colours for inputs and outline buttons,
+ * which follow its light and dark theme, and set every colour explicitly.
  */
 .starrating-app-coursepage .starrating-feedback {
     display: flex;
@@ -214,24 +216,45 @@
 .starrating-app-coursepage .starrating-feedback-input {
     box-sizing: border-box;
     width: 100%;
-    padding: 0.4rem;
-    border: 1px solid var(--stroke, #8f959e);
-    border-radius: 4px;
-    background: var(--ion-background-color, #fff);
-    color: inherit;
+    /* The app makes every textarea 200px high; three rows are enough here. */
+    height: auto;
+    padding: 0.5rem;
+    border: 1px solid var(--core-input-stroke, #8f959e);
+    border-radius: 0.5rem;
+    background-color: var(--core-input-background, #fff);
+    color: var(--core-input-text, #1d2125);
     font: inherit;
     resize: vertical;
+}
+
+.starrating-app-coursepage .starrating-feedback-input:focus-visible {
+    outline: 2px solid var(--ion-color-primary, #0f6cbf);
+    outline-offset: 1px;
 }
 
 .starrating-app-coursepage .starrating-feedback-save {
     align-self: center;
     min-height: 2.75rem;
-    padding: 0.35rem 0.9rem;
-    border: 1px solid currentColor;
-    border-radius: 4px;
-    background: transparent;
+    padding: 0.4rem 1.1rem;
+    border: 1px solid var(--ion-color-primary, #0f6cbf);
+    border-radius: 0.5rem;
+    background-color: transparent;
     color: var(--ion-color-primary, #0f6cbf);
     font: inherit;
+    font-weight: 500;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.starrating-app-coursepage .starrating-feedback-save:active {
+    background-color: var(--ion-color-primary, #0f6cbf);
+    color: var(--ion-color-primary-contrast, #fff);
+}
+
+.starrating-app-coursepage .starrating-feedback-save:focus-visible {
+    outline: 2px solid var(--ion-color-primary, #0f6cbf);
+    outline-offset: 2px;
 }
 
 .starrating-feedback .filter-rating-hidden {

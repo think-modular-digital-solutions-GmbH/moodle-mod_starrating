@@ -32,6 +32,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - In the Moodle app, rating a star on the course page with Enter or Space also
   opened the activity when the key was released.
+- Changes to the stylesheet never reached the Moodle app unless the plugin
+  version changed, because the app downloads it again only when its version
+  does. The stylesheet now carries a fingerprint of its own content.
+- The feedback field and its button on the app course page take the app's own
+  colours for inputs and buttons, instead of dark grey browser defaults.
 
 ## [2.0.0] - 2026-09-29
 

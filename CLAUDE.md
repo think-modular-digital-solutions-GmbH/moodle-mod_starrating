@@ -167,7 +167,7 @@ so even when the answer is nothing. Standing instruction from 2026-08-18.
 
 | Changed | App action |
 | :--- | :--- |
-| `db/mobile.php`, `styles.css`, anything in `$addons` | Log out and log in — site plugins are only fetched on `CoreEvents.LOGIN` |
+| `db/mobile.php`, `styles.css`, anything in `$addons` | Purge caches, then log out and log in — site plugins are only fetched on `CoreEvents.LOGIN`, and `tool_mobile` caches them. The app downloads `styles.css` again only when its `version` changes, which is a fingerprint of the file, so no version bump is needed |
 | `classes/output/mobile.php`, `mobile_*` templates | Pull to refresh, or clear the app cache — `tool_mobile_get_content` results are cached |
 | Web service code only | Nothing; the rating calls run with `getFromCache: 0` |
 | `version.php` bumped | Moodle *Notifications* and purge caches first, then whatever the app needs |
