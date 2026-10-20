@@ -129,8 +129,11 @@ inside the app. No browser, and no second login.
   asks for text feedback shows the field here, inside a named form, and every
   star names that form (`form="starrating-feedback-12"`), so the directive sends
   the text along with the stars.
-- The field is on the activity page only. A tap on the course page sends the
-  stars alone, which keeps whatever feedback is stored.
+- The course page shows the field too, as plain markup like its stars:
+  `mobile/init.js` sends its text with every tap on a star, and its *Save
+  feedback* button saves the text with the stars already given. The script keeps
+  taps and keys inside the field away from the course card, which would
+  otherwise open the activity and swallow every space and line break typed.
 
 So in the app rating is one tap on the course page, the same as one click on the
 web, and the activity page is there for anyone who opens it.

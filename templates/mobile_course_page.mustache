@@ -31,21 +31,33 @@
 
     The data attributes are the contract with mobile/init.js.
 
+    An activity that asks for text feedback adds a plain textarea, which
+    mobile/init.js sends with every tap on a star, and a button that saves the
+    text alone. That button is always rendered and only hidden while there is no
+    rating, so the script can reveal it after the first tap without a reload.
+
     Context variables required for this template:
     * name string Name of the activity, which is the criterion
     * cmid int Course module id
     * courseid int Course id
+    * userrating int Stars the current user gave, 0 when not rated
     * canrate bool Whether the user may rate
     * stars array List of value, on and label
     * statustext string The current user rating in words
     * showaverage bool Whether to show the average
     * averagetext string The average in words
+    * feedbackform bool Whether the activity asks for text feedback
+    * feedback string Feedback the current user gave
+    * feedbackmaxlength int Longest feedback that is stored
+    * feedbacklabel string Label of the feedback field
+    * savefeedbacklabel string Text of the button that saves the feedback alone
 
     Example context (json):
     {
         "name": "Teaching quality",
         "cmid": 12,
         "courseid": 7,
+        "userrating": 3,
         "canrate": true,
         "stars": [
             {"value": 1, "on": true, "label": "Rate Teaching quality with 1 of 5 stars"},
@@ -56,11 +68,16 @@
         ],
         "statustext": "Your rating for Teaching quality: 3 of 5 stars",
         "showaverage": true,
-        "averagetext": "Average 3.8 of 5 from 12 ratings"
+        "averagetext": "Average 3.8 of 5 from 12 ratings",
+        "feedbackform": true,
+        "feedback": "Clear and well paced",
+        "feedbackmaxlength": 255,
+        "feedbacklabel": "Your feedback (optional)",
+        "savefeedbacklabel": "Save feedback"
     }
 }}
 <div class="starrating-activity starrating-app-coursepage" data-cmid="{{cmid}}" data-courseid="{{courseid}}"
-    data-canrate="{{#canrate}}1{{/canrate}}{{^canrate}}0{{/canrate}}">
+    data-userrating="{{userrating}}" data-canrate="{{#canrate}}1{{/canrate}}{{^canrate}}0{{/canrate}}">
     <span class="starrating-name">{{name}}</span>
     <span class="filter-rating" role="group" aria-label="{{name}}">
         <span class="sr-only visually-hidden" data-region="status">{{statustext}}</span>
@@ -83,4 +100,13 @@
             <span class="filter-rating-average" data-region="average">{{averagetext}}</span>
         {{/showaverage}}
     </span>
+    {{#feedbackform}}
+        <span class="starrating-feedback" data-region="feedback">
+            <label for="starrating-app-feedback-{{cmid}}" class="starrating-feedback-label">{{feedbacklabel}}</label>
+            <textarea id="starrating-app-feedback-{{cmid}}" name="feedback" rows="3" maxlength="{{feedbackmaxlength}}"
+                class="starrating-feedback-input">{{feedback}}</textarea>
+            <button type="button" data-action="savefeedback"
+                class="starrating-feedback-save{{^userrating}} filter-rating-hidden{{/userrating}}">{{savefeedbacklabel}}</button>
+        </span>
+    {{/feedbackform}}
 </div>

@@ -22,6 +22,12 @@
  * behaviour: one tap saves the rating through mod_starrating_set_rating and
  * repaints the stars on the spot, without opening the activity.
  *
+ * An activity that asks for text feedback also has a textarea there. Its text
+ * goes along with every tap on a star, and its button saves the text with the
+ * stars already given. The course card opens the activity on a tap and on
+ * Enter or Space, and cancels those keys on the way, so everything typed or
+ * tapped inside the feedback region is kept away from the card.
+ *
  * The app evaluates this with "this" bound to an object carrying its services,
  * so they are read from "this". No IIFE, and no top level return, which eval
  * does not allow.
@@ -100,6 +106,17 @@ var updateWidget = function(widget, result) {
 
     widget.setAttribute('data-userrating', result.userrating);
 
+    var field = widget.querySelector('textarea[name="feedback"]');
+    if (field && result.allowfeedback) {
+        field.value = result.feedback;
+    }
+
+    // Saving the text alone needs stars to keep, so the button waits for them.
+    var save = widget.querySelector('[data-action="savefeedback"]');
+    if (save) {
+        save.classList.toggle('filter-rating-hidden', !(result.userrating > 0));
+    }
+
     var status = widget.querySelector('[data-region="status"]');
     if (status) {
         status.textContent = result.statustext;
@@ -146,8 +163,15 @@ var saveRating = function(widget, rating) {
 
     var cmid = parseInt(widget.getAttribute('data-cmid'), 10);
     var courseid = parseInt(widget.getAttribute('data-courseid'), 10);
+    var params = {cmid: cmid, rating: rating};
 
-    site.write('mod_starrating_set_rating', {cmid: cmid, rating: rating}).then(function(result) {
+    // Without a field the feedback is left out, which keeps what is stored.
+    var field = widget.querySelector('textarea[name="feedback"]');
+    if (field) {
+        params.feedback = field.value;
+    }
+
+    site.write('mod_starrating_set_rating', params).then(function(result) {
         updateWidget(widget, result);
         invalidateCoursePage(courseid, cmid);
         showToast(result.message);
@@ -159,42 +183,102 @@ var saveRating = function(widget, rating) {
 };
 
 /**
- * Handle a tap or key press on a star.
+ * Keep an event from reaching anything outside the widget, the course card above all.
  *
  * @param {Event} event The event.
+ * @param {Boolean} cancel Whether to cancel what the browser would do with it as well.
  */
-var handleActivation = function(event) {
-    if (!event.target || !event.target.closest) {
-        return;
+var stopEvent = function(event, cancel) {
+    if (cancel) {
+        event.preventDefault();
     }
-
-    var star = event.target.closest('.starrating-app-coursepage .filter-rating-star[data-value]');
-    if (!star) {
-        return;
-    }
-
-    var widget = star.closest('.starrating-activity');
-    if (!widget || widget.getAttribute('data-canrate') !== '1') {
-        return;
-    }
-
-    event.preventDefault();
     event.stopPropagation();
     if (event.stopImmediatePropagation) {
         event.stopImmediatePropagation();
     }
+};
 
-    saveRating(widget, parseInt(star.getAttribute('data-value'), 10));
+/**
+ * The course page element an event happened in, if it is part of a widget.
+ *
+ * @param {Event} event The event.
+ * @param {String} selector Selector of the element, inside a course page widget.
+ * @return {Element|null}
+ */
+var closestInWidget = function(event, selector) {
+    if (!event.target || !event.target.closest) {
+        return null;
+    }
+
+    return event.target.closest('.starrating-app-coursepage ' + selector);
+};
+
+/**
+ * Handle a tap or key press on a star, or on the button that saves the feedback.
+ *
+ * @param {Event} event The event.
+ */
+var handleActivation = function(event) {
+    var star = closestInWidget(event, '.filter-rating-star[data-value]');
+    var save = star ? null : closestInWidget(event, '[data-action="savefeedback"]');
+    if (!star && !save) {
+        return;
+    }
+
+    var widget = (star || save).closest('.starrating-activity');
+    if (!widget || widget.getAttribute('data-canrate') !== '1') {
+        return;
+    }
+
+    stopEvent(event, true);
+
+    var rating = star
+        ? parseInt(star.getAttribute('data-value'), 10)
+        : parseInt(widget.getAttribute('data-userrating'), 10);
+
+    if (rating > 0) {
+        saveRating(widget, rating);
+    }
 };
 
 // Capture phase, so the tap is handled before anything else in the course page
 // gets a chance to treat it as opening the activity.
-document.addEventListener('click', handleActivation, true);
+document.addEventListener('click', function(event) {
+    handleActivation(event);
+
+    // A tap into the field or on its label must place the caret, not open the
+    // activity. Not cancelled, or the field would never get the focus.
+    if (closestInWidget(event, '.starrating-feedback')) {
+        stopEvent(event, false);
+    }
+}, true);
 
 document.addEventListener('keydown', function(event) {
+    // Typing in the feedback is the browser's business only. The card would
+    // cancel Space and Enter, so nobody could type a space or a new line.
+    // The save button is a real button and turns its keys into a click.
+    if (closestInWidget(event, '.starrating-feedback')) {
+        stopEvent(event, false);
+
+        return;
+    }
+
     if (event.key !== 'Enter' && event.key !== ' ') {
         return;
     }
 
     handleActivation(event);
 }, true);
+
+// The card opens the activity when Enter or Space is released, so a key that
+// rated on a star, or that was typed into the feedback, must not get that far.
+['keyup', 'keypress'].forEach(function(type) {
+    document.addEventListener(type, function(event) {
+        if (closestInWidget(event, '.starrating-feedback')) {
+            stopEvent(event, false);
+        } else if ((event.key === 'Enter' || event.key === ' ')
+                && closestInWidget(event, '.filter-rating-star[data-value]')) {
+            stopEvent(event, true);
+        }
+    }, true);
+});

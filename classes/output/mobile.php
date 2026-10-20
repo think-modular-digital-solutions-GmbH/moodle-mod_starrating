@@ -150,6 +150,11 @@ class mobile {
      * call-ws directive, so these stars are plain markup and mobile/init.js
      * gives them their behaviour: one tap saves and repaints, in place.
      *
+     * An activity that asks for text feedback gets a plain textarea here as
+     * well, which mobile/init.js sends along with every tap on a star. The
+     * feedback can be written into the markup, unlike on the activity page:
+     * core-format-text sets it as HTML and never compiles it with Angular.
+     *
      * @param array $args Arguments passed by the app, expects cmid.
      * @return array Content for the app.
      */
@@ -170,6 +175,10 @@ class mobile {
         $maxstars = isset($customdata['maxstars'])
             ? rating_manager::normalise_max_stars($customdata['maxstars'])
             : rating_manager::get_max_stars((int) $cm->instance);
+        $allowfeedback = isset($customdata['allowfeedback'])
+            ? !empty($customdata['allowfeedback'])
+            : rating_manager::allows_feedback((int) $cm->instance);
+        $feedbackform = $canrate && $allowfeedback;
 
         $stars = [];
         for ($value = 1; $value <= $maxstars; $value++) {
@@ -188,11 +197,17 @@ class mobile {
             'name' => $name,
             'cmid' => $cm->id,
             'courseid' => $course->id,
+            'userrating' => $userrating,
             'stars' => $stars,
             'canrate' => $canrate,
             'statustext' => rating_manager::get_status_text($name, $userrating, $maxstars),
             'showaverage' => !empty($customdata['showaverage']),
             'averagetext' => rating_manager::get_average_text($stats, $maxstars),
+            'feedbackform' => $feedbackform,
+            'feedback' => $feedbackform ? rating_manager::get_user_feedback((int) $cm->instance) : '',
+            'feedbackmaxlength' => rating_manager::MAX_FEEDBACK_LENGTH,
+            'feedbacklabel' => get_string('feedbacklabel', 'mod_starrating'),
+            'savefeedbacklabel' => get_string('savefeedback', 'mod_starrating'),
         ]);
 
         return [

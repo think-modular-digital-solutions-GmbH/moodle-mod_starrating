@@ -16,10 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   wide default, shows a text area of up to 255 characters below the stars. The
   text is sent with the click on a star, so rating is still a single click, and
   a *Save feedback* button changes it later without touching the stars. Line
-  breaks are kept and shown in the reports. Feedback is
-  only stored together with a rating and is removed when the rating is
-  withdrawn. Works on the course page, on the activity page and on the activity
-  page of the Moodle app.
+  breaks are kept and shown in the reports. Feedback is only stored together
+  with a rating and is removed when the rating is withdrawn. Works on the
+  course page and on the activity page, on the web and in the Moodle app.
 - The course report and *Star ratings by user* show the feedback next to each
   rating, and include it in downloads.
 - `mod_starrating_set_rating` takes an optional `feedback`, and both rating web
@@ -28,6 +27,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   every deletion path of the Privacy API.
 - Behat tests for text feedback, and a `feedback` column for the
   `the following "mod_starrating > ratings" exist:` step.
+
+### Fixed
+
+- In the Moodle app, rating a star on the course page with Enter or Space also
+  opened the activity when the key was released.
 
 ## [2.0.0] - 2026-09-29
 

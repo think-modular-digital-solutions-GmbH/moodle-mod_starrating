@@ -191,3 +191,49 @@
     max-width: 30rem;
     resize: vertical;
 }
+
+/*
+ * The feedback on the app course page sits outside the stars, centred under
+ * them like the rest of the card. The app has no Bootstrap, so the field and
+ * its button are styled here, from the app's own colours where it has them.
+ */
+.starrating-app-coursepage .starrating-feedback {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.25rem;
+    width: 100%;
+    max-width: 30rem;
+    text-align: start;
+}
+
+.starrating-app-coursepage .starrating-feedback-label {
+    font-size: 0.85em;
+}
+
+.starrating-app-coursepage .starrating-feedback-input {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 0.4rem;
+    border: 1px solid var(--stroke, #8f959e);
+    border-radius: 4px;
+    background: var(--ion-background-color, #fff);
+    color: inherit;
+    font: inherit;
+    resize: vertical;
+}
+
+.starrating-app-coursepage .starrating-feedback-save {
+    align-self: center;
+    min-height: 2.75rem;
+    padding: 0.35rem 0.9rem;
+    border: 1px solid currentColor;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--ion-color-primary, #0f6cbf);
+    font: inherit;
+}
+
+.starrating-feedback .filter-rating-hidden {
+    display: none;
+}

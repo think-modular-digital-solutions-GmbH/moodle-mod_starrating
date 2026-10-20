@@ -82,8 +82,16 @@ Target: Moodle 4.3 and later, developed against Moodle 4.5 LTS.
   link to the activity** — that was tried and rejected.
 - **`mobile/init.js` and `templates/mobile_course_page.mustache` are a
   contract.** The script keys off `.starrating-app-coursepage`,
-  `data-cmid`, `data-courseid`, `data-canrate` and `data-value`, and repaints by
-  swapping the `ion-icon` `src` between the solid and regular star assets.
+  `data-cmid`, `data-courseid`, `data-canrate`, `data-userrating` and
+  `data-value`, plus `textarea[name="feedback"]`, `.starrating-feedback` and
+  `[data-action="savefeedback"]`, and repaints by swapping the `ion-icon` `src`
+  between the solid and regular star assets.
+- **The app course card opens the activity on a tap and on Enter or Space, and
+  cancels those keys** (`ariaButtonClick` → `CoreDom.initializeClickableElementA11y`
+  on the title span). `mobile/init.js` therefore stops, in the capture phase and
+  without cancelling, every click and key event inside `.starrating-feedback`,
+  or nobody could type a space or a line break there, and stops `keyup` on a
+  star, which would otherwise open the activity after rating.
 - **Per user content goes in `starrating_cm_info_view()`, never in
   `starrating_get_coursemodule_info()`.** The latter feeds the course cache,
   which is shared between users.
@@ -140,7 +148,7 @@ version:
 ```bash
 ~/Documents/behat/up.sh          # once per boot, idempotent
 ~/Documents/behat/behat.sh       # 36 acceptance scenarios, ~90 s
-~/Documents/behat/phpunit.sh     # 29 unit tests, ~7 s
+~/Documents/behat/phpunit.sh     # 31 unit tests, ~7 s
 ~/Documents/behat/phpcs.sh       # Moodle coding style, silence means clean
 ```
 
