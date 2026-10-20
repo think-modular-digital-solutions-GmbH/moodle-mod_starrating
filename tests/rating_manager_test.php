@@ -322,14 +322,16 @@ final class rating_manager_test extends \advanced_testcase {
     }
 
     /**
-     * Feedback is folded into one clean line and cut to length.
+     * Feedback keeps its line breaks, loses stray whitespace and is cut to length.
      *
      * @return void
      */
     public function test_normalise_feedback(): void {
         $this->assertSame('', rating_manager::normalise_feedback(null));
         $this->assertSame('', rating_manager::normalise_feedback("  \n\t "));
-        $this->assertSame('Two lines', rating_manager::normalise_feedback("Two\r\n  lines"));
+        $this->assertSame("Two\nlines", rating_manager::normalise_feedback("Two  \r\n  lines"));
+        $this->assertSame("One\n\nTwo", rating_manager::normalise_feedback("One\n\n\n\n\tTwo\n"));
+        $this->assertSame('Two words', rating_manager::normalise_feedback("Two \t  words"));
         $this->assertSame('bold', rating_manager::normalise_feedback('<b>bold</b>'));
 
         $long = str_repeat('ä', rating_manager::MAX_FEEDBACK_LENGTH + 20);

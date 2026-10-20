@@ -32,8 +32,8 @@ $string['allowclear'] = 'Zurückziehen einer Bewertung erlauben';
 $string['allowclear_desc'] = 'Voreinstellung für neue Aktivitäten: einen Link anzeigen, mit dem die eigene Bewertung entfernt werden kann.';
 $string['allowclear_help'] = 'Zeigt neben den Sternen einen Link an, mit dem die eigene Bewertung wieder entfernt werden kann.';
 $string['allowfeedback'] = 'Textfeedback erfragen';
-$string['allowfeedback_desc'] = 'Voreinstellung für neue Aktivitäten: Neben den Sternen ein kurzes Textfeld anzeigen, in dem man begründen kann, warum man so bewertet hat.';
-$string['allowfeedback_help'] = 'Zeigt neben den Sternen ein kurzes Textfeld, in dem man der Bewertung eine Zeile Feedback mitgeben kann, bis zu 255 Zeichen. Der Text wird zusammen mit den Sternen gesendet und nur gespeichert, solange es eine Bewertung gibt: Wird die Bewertung zurückgezogen, wird auch der Text entfernt.
+$string['allowfeedback_desc'] = 'Voreinstellung für neue Aktivitäten: Unter den Sternen ein kurzes Textfeld anzeigen, in dem man begründen kann, warum man so bewertet hat.';
+$string['allowfeedback_help'] = 'Zeigt unter den Sternen ein kurzes Textfeld, in dem man der Bewertung ein paar Zeilen Feedback mitgeben kann, bis zu 255 Zeichen. Der Text wird zusammen mit den Sternen gesendet und nur gespeichert, solange es eine Bewertung gibt: Wird die Bewertung zurückgezogen, wird auch der Text entfernt.
 
 Lehrende sehen das Feedback im Kursbericht neben jeder Bewertung.';
 $string['applyfilter'] = 'Filter anwenden';

@@ -108,9 +108,11 @@ Target: Moodle 4.3 and later, developed against Moodle 4.5 LTS.
   rating stays one click. A form carries one token for all its buttons, so it
   is signed with `rating_token::generate_for_form()`, bound to user and course
   module but not to a number of stars.
-- **That form opens with an invisible, disabled-until-rated submit button.**
-  Enter in a text field presses the first submit button of its form, which
-  would otherwise be star 1. Do not remove it or move the stars before it.
+- **The feedback field is a `<textarea>`, and that is what keeps Enter from
+  rating.** Enter in a single line `<input>` presses the first submit button of
+  its form, which is star 1. Do not turn it back into an input without guarding
+  against that. The limit is 255 characters (`MAX_FEEDBACK_LENGTH`, `maxlength`,
+  the `char(255)` column); raising it needs a `text` column and an upgrade step.
 - **Feedback belongs to the rating.** `set_rating()` takes `null` to keep the
   stored text (the app course page sends stars only), `''` to remove it, and
   ignores it when the activity does not ask for feedback. Withdrawing the
@@ -137,7 +139,7 @@ version:
 
 ```bash
 ~/Documents/behat/up.sh          # once per boot, idempotent
-~/Documents/behat/behat.sh       # 37 acceptance scenarios, ~100 s
+~/Documents/behat/behat.sh       # 36 acceptance scenarios, ~90 s
 ~/Documents/behat/phpunit.sh     # 29 unit tests, ~7 s
 ~/Documents/behat/phpcs.sh       # Moodle coding style, silence means clean
 ```

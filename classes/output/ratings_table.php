@@ -164,7 +164,8 @@ class ratings_table extends table_sql {
             return $feedback;
         }
 
-        return s($feedback);
+        // Line breaks are part of the feedback, and s() keeps them as plain newlines.
+        return nl2br(s($feedback));
     }
 
     /**

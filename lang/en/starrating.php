@@ -32,8 +32,8 @@ $string['allowclear'] = 'Allow withdrawing a rating';
 $string['allowclear_desc'] = 'Default for new activities: show a link that lets people remove the rating they gave.';
 $string['allowclear_help'] = 'Shows a link next to the stars with which people can remove the rating they gave.';
 $string['allowfeedback'] = 'Ask for text feedback';
-$string['allowfeedback_desc'] = 'Default for new activities: show a short text field next to the stars, in which people can say why they rated the way they did.';
-$string['allowfeedback_help'] = 'Shows a short text field next to the stars, in which people can add a line of feedback to their rating, up to 255 characters. The text is sent together with the stars and is only stored while there is a rating: withdrawing the rating removes the text too.
+$string['allowfeedback_desc'] = 'Default for new activities: show a short text field below the stars, in which people can say why they rated the way they did.';
+$string['allowfeedback_help'] = 'Shows a short text field below the stars, in which people can add a few lines of feedback to their rating, up to 255 characters. The text is sent together with the stars and is only stored while there is a rating: withdrawing the rating removes the text too.
 
 Teachers see the feedback next to each rating in the course report.';
 $string['applyfilter'] = 'Apply filter';

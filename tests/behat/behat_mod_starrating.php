@@ -144,6 +144,21 @@ class behat_mod_starrating extends behat_base {
     }
 
     /**
+     * Press Enter in the feedback field, which starts a new line there.
+     *
+     * @When I type a line break into my feedback for :criterion
+     * @param string $criterion Name of the activity being rated.
+     */
+    public function i_type_a_line_break_into_my_feedback_for(string $criterion): void {
+        $this->require_javascript();
+
+        $field = $this->get_feedback_field($criterion);
+        $field->focus();
+        behat_base::type_keys($this->getSession(), [behat_keys::ENTER]);
+        $this->wait_for_pending_js();
+    }
+
+    /**
      * Send the text feedback with the rating already given, without touching the stars.
      *
      * @When I save my feedback for :criterion
@@ -179,21 +194,6 @@ class behat_mod_starrating extends behat_base {
     }
 
     /**
-     * Press Enter in the feedback field, which is what people do after typing.
-     *
-     * @When I submit my feedback for :criterion with the enter key
-     * @param string $criterion Name of the activity being rated.
-     */
-    public function i_submit_my_feedback_with_the_enter_key(string $criterion): void {
-        $this->require_javascript();
-
-        $field = $this->get_feedback_field($criterion);
-        $field->focus();
-        behat_base::type_keys($this->getSession(), [behat_keys::ENTER]);
-        $this->wait_for_pending_js();
-    }
-
-    /**
      * Check what the feedback field holds.
      *
      * @Then my feedback for :criterion should be :text
@@ -220,7 +220,7 @@ class behat_mod_starrating extends behat_base {
      * @throws ExpectationException
      */
     public function there_should_be_no_feedback_field_for(string $criterion): void {
-        if ($this->get_widget($criterion)->find('css', 'input[name="feedback"]')) {
+        if ($this->get_widget($criterion)->find('css', 'textarea[name="feedback"]')) {
             throw new ExpectationException(
                 "There is a feedback field for \"{$criterion}\", which there should not be.",
                 $this->getSession()
@@ -231,9 +231,6 @@ class behat_mod_starrating extends behat_base {
     /**
      * The visible button that saves the feedback with the current rating.
      *
-     * The form also opens with an invisible submit button, the one the Enter key
-     * presses, which is hidden from assistive technology and so left out here.
-     *
      * @param string $criterion Name of the activity being rated.
      * @return NodeElement|null The button, null when there is none.
      */
@@ -242,7 +239,7 @@ class behat_mod_starrating extends behat_base {
 
         return $this->get_widget($criterion)->find(
             'xpath',
-            "//button[@type='submit'][not(@aria-hidden)][normalize-space(.)={$label}]"
+            "//button[@type='submit'][normalize-space(.)={$label}]"
         );
     }
 
@@ -255,7 +252,7 @@ class behat_mod_starrating extends behat_base {
     protected function get_feedback_field(string $criterion): NodeElement {
         return $this->find(
             'css',
-            'input[name="feedback"]',
+            'textarea[name="feedback"]',
             new ExpectationException(
                 "There is no feedback field for \"{$criterion}\".",
                 $this->getSession()

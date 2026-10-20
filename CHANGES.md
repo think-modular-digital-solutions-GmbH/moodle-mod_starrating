@@ -13,9 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Activities can ask for a short text feedback along with the stars.** A new
   per activity setting, *Ask for text feedback*, off by default and with a site
-  wide default, shows a one line text field below the stars. The text is sent
-  with the click on a star, so rating is still a single click, and a *Save
-  feedback* button changes it later without touching the stars. Feedback is
+  wide default, shows a text area of up to 255 characters below the stars. The
+  text is sent with the click on a star, so rating is still a single click, and
+  a *Save feedback* button changes it later without touching the stars. Line
+  breaks are kept and shown in the reports. Feedback is
   only stored together with a rating and is removed when the rating is
   withdrawn. Works on the course page, on the activity page and on the activity
   page of the Moodle app.

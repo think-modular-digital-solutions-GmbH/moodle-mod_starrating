@@ -2,7 +2,7 @@
 Feature: Add a short text feedback to a star rating
   In order to say why I rated the way I did
   As a user
-  I need to send a line of text together with my stars, if the activity asks for it
+  I need to send a short text together with my stars, if the activity asks for it
 
   Background:
     Given the following "courses" exist:
@@ -81,24 +81,15 @@ Feature: Add a short text feedback to a star rating
     Then I should not be able to save my feedback alone for "Teaching quality"
 
   @javascript
-  Scenario: Pressing Enter in the field never rates one star by accident
+  Scenario: Enter starts a new line in the feedback and never rates by accident
     Given I am on the "Course 1" course page logged in as "student1"
     When I enter "Not sure yet" as my feedback for "Teaching quality"
-    And I submit my feedback for "Teaching quality" with the enter key
+    And I type a line break into my feedback for "Teaching quality"
     Then I should not see "Your rating was saved."
     And the star rating for "Teaching quality" should show 0 of 5 stars
-
-  @javascript
-  Scenario: Pressing Enter in the field saves the feedback with the stars already given
-    Given the following "mod_starrating > ratings" exist:
-      | activity         | user     | rating |
-      | Teaching quality | student1 | 4      |
-    And I am on the "Course 1" course page logged in as "student1"
-    When I enter "Worth it" as my feedback for "Teaching quality"
-    And I submit my feedback for "Teaching quality" with the enter key
-    Then I should see "Your rating was saved."
-    And the star rating for "Teaching quality" should show 4 of 5 stars
-    And my feedback for "Teaching quality" should be "Worth it"
+    And I rate "Teaching quality" with 4 stars
+    And I should see "Your rating was saved."
+    And my feedback for "Teaching quality" should be "Not sure yet"
 
   Scenario: The activity page asks for feedback as well
     Given I am on the "Teaching quality" "starrating activity" page logged in as "student1"

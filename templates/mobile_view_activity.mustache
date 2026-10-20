@@ -132,8 +132,8 @@
     {{#feedbackform}}
         <form name="{{formname}}">
             <ion-item class="ion-text-wrap">
-                <ion-input type="text" name="feedback" [value]="CONTENT_OTHERDATA.feedback.text" maxlength="{{feedbackmaxlength}}"
-                    label="{{feedbacklabel}}" labelPlacement="stacked"></ion-input>
+                <ion-textarea name="feedback" [value]="CONTENT_OTHERDATA.feedback.text" rows="3" [autoGrow]="true"
+                    maxlength="{{feedbackmaxlength}}" label="{{feedbacklabel}}" labelPlacement="stacked"></ion-textarea>
             </ion-item>
         </form>
         {{#cansavefeedback}}

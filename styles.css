@@ -157,7 +157,7 @@
     outline-offset: 2px;
 }
 
-/* The feedback field sits on its own line below the stars. */
+/* The feedback field sits below the stars, its label above it. */
 .starrating-activity .starrating-feedback-form {
     flex: 1 1 auto;
     min-width: 0;
@@ -182,7 +182,12 @@
     font-size: 0.85em;
 }
 
+.filter-rating .starrating-feedback-label {
+    flex-basis: 100%;
+}
+
 .filter-rating .starrating-feedback-input {
-    flex: 1 1 12rem;
+    flex: 1 1 100%;
     max-width: 30rem;
+    resize: vertical;
 }

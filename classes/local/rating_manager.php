@@ -138,16 +138,21 @@ class rating_manager {
     /**
      * Force a text feedback coming from a form or a web service into shape.
      *
-     * The feedback is a single short line, so line breaks are folded into
-     * spaces, and anything beyond the maximum length is cut off rather than
-     * refused, because the stars it came with are worth keeping.
+     * Line breaks are kept, as a single newline each, because browsers send
+     * them as two characters while counting them as one against maxlength.
+     * Runs of spaces and of blank lines are collapsed, and anything beyond the
+     * maximum length is cut off rather than refused, because the stars it came
+     * with are worth keeping.
      *
      * @param string|null $feedback The feedback as submitted.
      * @return string The feedback to store, empty for none.
      */
     public static function normalise_feedback(?string $feedback): string {
         $feedback = clean_param((string) $feedback, PARAM_TEXT);
-        $feedback = trim(preg_replace('/\s+/u', ' ', $feedback));
+        $feedback = str_replace(["\r\n", "\r"], "\n", $feedback);
+        $feedback = preg_replace('/[^\S\n]+/u', ' ', $feedback);
+        $feedback = preg_replace('/ ?\n ?/', "\n", $feedback);
+        $feedback = trim(preg_replace('/\n{3,}/', "\n\n", $feedback));
 
         return \core_text::substr($feedback, 0, self::MAX_FEEDBACK_LENGTH);
     }

@@ -43,16 +43,18 @@ the Moodle app opens.
 | Number of stars | 5 | How many stars people choose from, 2 to 10 |
 | Show the average | on | Shows the average and the number of ratings next to the stars |
 | Allow withdrawing a rating | on | Shows a link that removes the rating the user gave |
-| Ask for text feedback | off | Shows a one line text field below the stars for a short comment |
+| Ask for text feedback | off | Shows a text area below the stars for a short comment |
 
 All four defaults for new activities are set under *Site administration →
 Plugins → Activity modules → Star rating*.
 
-With *Ask for text feedback* on, people can type a line of up to 255 characters
-before they click a star, and the text is sent together with the stars — rating
-is still one click. A *Save feedback* button changes the text later without
-touching the stars, and Enter in the field does the same; before there is a
-rating, Enter does nothing, so it can never rate one star by accident. The text
+With *Ask for text feedback* on, people can type up to 255 characters, line
+breaks included, before they click a star, and the text is sent together with
+the stars — rating is still one click. A *Save feedback* button changes the text
+later without touching the stars. Enter in the text area starts a new line, so
+it never submits a rating by accident. The limit is the `maxlength` of the
+field in the browser and in the app, and the server cuts anything longer to 255
+characters, which is also the size of the database column. The text
 belongs to the rating: it is only stored while there are stars, and withdrawing
 the rating removes it as well. Turning the setting off hides the field but keeps
 what was already given.
@@ -202,8 +204,8 @@ Built against WCAG 2.2 AA:
   carried by shape and not by colour. It is repeated as visually hidden text.
   The star colours reach at least 3:1 against a white background.
 - In the app the stars have a touch target above the WCAG 2.2 minimum.
-- The feedback field has a visible label, and pressing Enter in it never
-  submits a rating the user did not choose.
+- The feedback text area has a visible label, and pressing Enter in it starts
+  a new line, never a rating the user did not choose.
 
 This has not been verified with assistive technology or with users. Before
 rolling it out, have the widget checked by someone testing with a screen
